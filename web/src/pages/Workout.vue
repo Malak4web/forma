@@ -3,8 +3,10 @@ import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NotFound from './NotFound.vue'
 import { programById, planById, egp } from '../data.js'
-import { store, completeDay, doneDays, toast } from '../stores/app.js'
+import { store, completeDay, doneDays, toast, logWeight } from '../stores/app.js'
 import { api } from '../api.js'
+import MAppBar from '../mobile/MAppBar.vue'
+import { MOBILE } from '../mobile/device.js'
 
 const route = useRoute()
 const p = computed(() => programById(route.params.program))
@@ -102,9 +104,24 @@ const R = 120, C = 2 * Math.PI * R
 const dash = computed(() => C * (1 - left.value / total.value))
 const nextDayLink = computed(() => (n.value < p.value.days ? `/workout/${p.value.id}/${n.value + 1}` : `/programs/${p.value.id}`))
 const buyLink = computed(() => (store.user ? `/checkout/${plan.value.id}` : `/register?next=/checkout/${plan.value.id}`))
+
+// done screen: log today's weight right away
+const kg = ref(store.weights.at(-1)?.kg || store.calc?.weight || '')
+const savingKg = ref(false)
+async function saveKg() {
+  const v = Number(kg.value)
+  if (!v || v < 30 || v > 300) return toast('اكتب وزن مظبوط', 'err')
+  savingKg.value = true
+  try { await logWeight(v); toast('اتسجّل ✓') } catch (e) { toast(e.message, 'err') } finally { savingKg.value = false }
+}
 </script>
 
 <template>
+  <div class="wk">
+  <MAppBar
+    v-if="MOBILE && phase !== 'work' && phase !== 'rest'"
+    close :title="valid ? `اليوم ${n}` : ''" :fallback="valid ? `/programs/${p.id}` : '/programs'"
+  />
   <NotFound v-if="!valid" />
   <section v-else-if="loading" class="wrap loading"><span class="spin" aria-label="بنحمّل"></span></section>
 
@@ -133,10 +150,10 @@ const buyLink = computed(() => (store.user ? `/checkout/${plan.value.id}` : `/re
     <nav class="crumbs"><RouterLink :to="`/programs/${p.id}`">{{ p.title }}</RouterLink><span>/</span><span>اليوم <span class="num">{{ n }}</span></span></nav>
     <span class="kicker">الأسبوع <span class="num">{{ day.week }}</span> · {{ day.title }}</span>
     <h1>اليوم <span class="num hl">{{ n }}</span></h1>
-    <div class="meta">
-      <span><b class="num">{{ day.rounds }}</b> جولات</span>
-      <span><b class="num">{{ day.items[0].work }}</b> ث شغل / <b class="num">{{ day.items[0].rest }}</b> ث راحة</span>
-      <span>حوالي <b class="num">{{ estMin }}</b> دقيقة</span>
+    <div class="istats">
+      <div><b class="num">{{ day.rounds }}</b><span>جولات</span></div>
+      <div><b class="num">{{ day.items[0].work }}/{{ day.items[0].rest }}</b><span>شغل/راحة</span></div>
+      <div><b class="num">{{ estMin }}</b><span>دقايق</span></div>
     </div>
     <ol class="list">
       <li v-for="(it, i) in day.items" :key="it.id">
@@ -158,13 +175,20 @@ const buyLink = computed(() => (store.user ? `/checkout/${plan.value.id}` : `/re
     <div class="trophy" aria-hidden="true">✓</div>
     <h1>عاش! <span class="hl">اليوم <span class="num">{{ n }}</span> خلص</span></h1>
     <p class="muted">خلّصت <span class="num amber">{{ doneDays(p.id).length }}</span> من <span class="num">{{ p.days }}</span> يوم في {{ p.title }}.</p>
+    <div class="grid30" aria-hidden="true">
+      <i v-for="d in p.days" :key="d" :class="{ on: doneDays(p.id).includes(d), now: d === n }"></i>
+    </div>
+    <form v-if="store.user" class="kgcard" @submit.prevent="saveKg">
+      <span><b>سجّل وزنك النهارده</b><small class="muted">عشان تشوف الفرق كل أسبوع</small></span>
+      <input v-model="kg" class="m-input ltr" type="number" inputmode="decimal" step="0.1" aria-label="الوزن بالكيلو" />
+      <button class="btn btn-primary btn-sm" :disabled="savingKg">سجّل</button>
+    </form>
     <div v-if="!store.user" class="save">
       <p>اعمل حساب عشان تقدّمك يتحفظ وتكمّل من أي موبايل.</p>
       <RouterLink :to="{ path: '/register', query: { next: `/programs/${p.id}` } }" class="btn btn-primary">احفظ تقدّمي</RouterLink>
     </div>
     <div class="btns">
       <RouterLink :to="nextDayLink" class="btn" :class="store.user ? 'btn-primary' : 'btn-ghost'">{{ n < p.days ? 'اليوم الجاي ←' : 'رجوع للبرنامج' }}</RouterLink>
-      <RouterLink to="/account" class="btn btn-ghost">سجّل وزنك</RouterLink>
     </div>
   </section>
 
@@ -197,12 +221,32 @@ const buyLink = computed(() => (store.user ? `/checkout/${plan.value.id}` : `/re
       </div>
     </div>
   </section>
+  </div>
 </template>
 
 <style scoped>
 .loading { padding-block: 80px; display: grid; place-items: center; }
 .spin { width: 44px; height: 44px; border-radius: 50%; border: 4px solid #333; border-top-color: var(--orange); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.istats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.istats div { display: grid; justify-items: center; padding: 12px 6px; border-radius: 16px; background: #141414; border: 1px solid #232323; }
+.istats b { font-size: 1.9rem; line-height: 1; color: var(--orange); }
+.istats span { font-size: .7rem; color: var(--muted); font-weight: 800; }
+.grid30 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; width: 100%; max-width: 420px; }
+.grid30 i { aspect-ratio: 1; border-radius: 5px; background: #222; }
+.grid30 i.on { background: var(--orange); }
+.grid30 i.now { background: var(--amber); }
+.kgcard { width: 100%; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 18px; background: #141414; border: 1px solid #232323; text-align: start; }
+.kgcard span { flex: 1; display: grid; }
+.kgcard small { font-size: .75rem; }
+.kgcard .m-input { width: 84px; height: 44px; text-align: center; }
+@media (max-width: 959px) {
+  .wk .intro, .wk .fin, .wk .wall { padding-top: 8px; padding-bottom: 110px; }
+  .wk .intro h1 { display: none; } /* the app bar already says اليوم N */
+  .wk .go { position: fixed; inset-inline: 16px; bottom: max(14px, env(safe-area-inset-bottom)); width: auto; min-height: 60px; z-index: 45; }
+  .wk .fin .btns { position: fixed; inset-inline: 16px; bottom: max(14px, env(safe-area-inset-bottom)); flex-wrap: nowrap; z-index: 45; }
+  .wk .fin .btns .btn { flex: 1; }
+}
 .wall, .intro, .fin { padding-block: 24px 60px; display: grid; gap: 14px; max-width: 720px; }
 .wall { justify-items: center; text-align: center; padding-top: 48px; }
 .lock { font-size: 3rem; }

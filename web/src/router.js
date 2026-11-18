@@ -1,23 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { store, ui } from './stores/app.js'
+import { MOBILE } from './mobile/device.js'
 
 const p = (name) => () => import(`./pages/${name}.vue`)
+// phones get the app screen when one exists (meta.m), otherwise the website page inside the app shell
+const pick = (desk, mob) => (MOBILE && mob ? () => import(`./mobile/${mob}.vue`) : p(desk))
 
 const routes = [
-  { path: '/', component: p('Home'), meta: { title: 'اتمرن صح من البيت', overlay: true, tab: true } },
-  { path: '/library', component: p('Library'), meta: { title: 'مكتبة التمارين', short: 'المكتبة', tab: true } },
-  { path: '/library/:id', component: p('Exercise'), meta: { title: 'تمرين' } },
-  { path: '/programs', component: p('Programs'), meta: { title: 'البرامج', tab: true } },
-  { path: '/programs/:id', component: p('Program'), meta: { title: 'برنامج' } },
-  { path: '/calculator', component: p('CalculatorPage'), meta: { title: 'احسب سعراتك ببلاش', short: 'الحاسبة' } },
-  { path: '/free-plan', component: p('FreePlan'), meta: { title: 'نظامك المبدئي' } },
-  { path: '/pricing', component: p('Pricing'), meta: { title: 'الباقات' } },
-  { path: '/register', component: p('Register'), meta: { title: 'حساب جديد', guest: true, bare: true } },
-  { path: '/login', component: p('Login'), meta: { title: 'دخول', guest: true, bare: true } },
-  { path: '/checkout/:plan', component: p('Checkout'), meta: { title: 'الدفع', auth: true, bare: true } },
-  { path: '/checkout/result/:order', component: p('CheckoutResult'), meta: { title: 'حالة الطلب', auth: true, bare: true } },
-  { path: '/account', component: p('Account'), meta: { title: 'حسابي', auth: true, tab: true } },
-  { path: '/workout/:program/:day', component: p('Workout'), meta: { title: 'تمرين اليوم', bare: true } },
+  { path: '/', component: pick('Home', 'MHome'), meta: { m: true, title: 'اتمرن صح من البيت', overlay: true, tab: true } },
+  { path: '/library', component: pick('Library', 'MLibrary'), meta: { m: true, title: 'مكتبة التمارين', short: 'المكتبة', tab: true } },
+  { path: '/library/:id', component: pick('Exercise', 'MExercise'), meta: { m: true, title: 'تمرين' } },
+  { path: '/programs', component: pick('Programs', 'MPrograms'), meta: { m: true, title: 'البرامج', tab: true } },
+  { path: '/programs/:id', component: pick('Program', 'MProgram'), meta: { m: true, title: 'برنامج' } },
+  { path: '/calculator', component: pick('CalculatorPage', 'MCalculator'), meta: { m: true, title: 'احسب سعراتك ببلاش', short: 'الحاسبة' } },
+  { path: '/free-plan', component: pick('FreePlan', 'MFreePlan'), meta: { m: true, title: 'نظامك المبدئي' } },
+  { path: '/pricing', component: pick('Pricing', 'MPricing'), meta: { m: true, title: 'الباقات' } },
+  { path: '/register', component: pick('Register', 'MAuth'), meta: { m: true, title: 'حساب جديد', guest: true, bare: true } },
+  { path: '/login', component: pick('Login', 'MAuth'), meta: { m: true, title: 'دخول', guest: true, bare: true } },
+  { path: '/checkout/:plan', component: pick('Checkout', 'MCheckout'), meta: { m: true, title: 'الدفع', auth: true, bare: true } },
+  { path: '/checkout/result/:order', component: pick('CheckoutResult', 'MOrder'), meta: { m: true, title: 'حالة الطلب', auth: true, bare: true } },
+  { path: '/account', component: pick('Account', 'MAccount'), meta: { m: true, title: 'حسابي', auth: true, tab: true } },
+  { path: '/workout/:program/:day', component: p('Workout'), meta: { m: true, title: 'تمرين اليوم', bare: true } },
   { path: '/admin/orders', component: p('AdminOrders'), meta: { title: 'الطلبات (أدمن)', auth: true, admin: true } },
   { path: '/admin/settings', component: p('AdminSettings'), meta: { title: 'الأسعار والدفع (أدمن)', auth: true, admin: true } },
   { path: '/admin/transformations', component: p('AdminTransformations'), meta: { title: 'التحولات (أدمن)', auth: true, admin: true } },
