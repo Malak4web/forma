@@ -31,10 +31,10 @@ jobs:
           npm --prefix web install --no-audit --no-fund
           npm --prefix web run build
 
-      - name: Setup PHP 8.3 & Composer
+      - name: Setup PHP 8.4 & Composer
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, gd, zip, fileinfo
           tools: composer:v2
 
@@ -102,7 +102,7 @@ jobs:
               storage/logs \
               bootstrap/cache
 
-            PHP_BIN="\$(command -v php83 || command -v /opt/alt/php83/usr/bin/php || command -v php)"
+            PHP_BIN="\$(command -v php84 || command -v /opt/alt/php84/usr/bin/php || command -v php83 || command -v /opt/alt/php83/usr/bin/php || command -v php)"
 
             if [ -f .env ]; then
               \$PHP_BIN artisan migrate --force
