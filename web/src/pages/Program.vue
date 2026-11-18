@@ -3,11 +3,11 @@ import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import NotFound from './NotFound.vue'
 import { programById, programDay, planById, meta, egp } from '../data.js'
-import { store, hasAccess, doneDays } from '../stores/app.js'
+import { store, hasAccess, doneDays, ui } from '../stores/app.js'
 
 const route = useRoute()
 const p = computed(() => programById(route.params.id))
-watchEffect(() => p.value && (document.title = `${p.value.title} | فورمة`))
+watchEffect(() => { if (p.value) { document.title = `${p.value.title} | فورمة`; ui.title = p.value.title } })
 const plan = computed(() => p.value && planById(p.value.plan))
 const owned = computed(() => p.value && hasAccess(p.value.id))
 const done = computed(() => (p.value ? doneDays(p.value.id) : []))
@@ -76,6 +76,12 @@ const buyLink = computed(() => (store.user ? `/checkout/${plan.value.id}` : `/re
       </div>
       <p class="note" style="margin-top: 18px">لو عندك إصابة أو وجع شديد أو مستمر، اكشف عند دكتور قبل ما تبدأ.</p>
     </section>
+
+    <!-- phones: primary action pinned above the tab bar -->
+    <div class="m-cta">
+      <RouterLink :to="`/workout/${p.id}/${owned ? nextDay : 1}`" class="btn btn-primary">{{ owned ? `▶ كمّل: اليوم ${nextDay}` : '▶ جرّب اليوم الأول' }}</RouterLink>
+      <RouterLink v-if="!owned" :to="buyLink" class="btn btn-ghost buy"><span class="num">{{ egp(plan.price) }}</span> ج.م</RouterLink>
+    </div>
   </div>
 </template>
 
@@ -122,4 +128,12 @@ const buyLink = computed(() => (store.user ? `/checkout/${plan.value.id}` : `/re
 .day.locked { opacity: .6; }
 .day.locked .d-s { background: #222; }
 .day.rest .d-n { background: #1d2a1d; color: var(--ok); }
+.m-cta { display: none; }
+@media (max-width: 959px) {
+  .ctas { display: none; }
+  .m-cta { position: fixed; z-index: 40; inset-inline: 0; bottom: calc(76px + env(safe-area-inset-bottom)); display: flex; gap: 8px; padding: 10px var(--gutter); background: linear-gradient(to top, #0a0a0a 60%, transparent); }
+  .m-cta .btn:first-child { flex: 1; }
+  .m-cta .buy { flex: none; background: #141414; }
+  .weeks { padding-bottom: 70px; }
+}
 </style>

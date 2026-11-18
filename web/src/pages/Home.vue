@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import ReelCard from '../components/ReelCard.vue'
 import Faq from '../components/Faq.vue'
+import TodayCard from '../components/TodayCard.vue'
 import { videos, categories, programs, steps } from '../data.js'
 import { store, doneDays } from '../stores/app.js'
 
@@ -13,8 +14,11 @@ const done30 = computed(() => doneDays('30'))
 
 <template>
   <div class="home">
+    <!-- signed-in: app-style "today" dashboard instead of the marketing hero -->
+    <div v-if="store.user" class="wrap"><TodayCard /></div>
+
     <!-- HERO -->
-    <section class="hero">
+    <section v-else class="hero">
       <picture class="hero-bg">
         <source media="(min-width: 900px)" srcset="/img/pyramids-1672.webp" />
         <img src="/img/pyramids-coach-720.webp" alt="الكوتش المقنّع قدام الأهرامات" fetchpriority="high" />
@@ -33,7 +37,7 @@ const done30 = computed(() => doneDays('30'))
       </div>
     </section>
 
-    <div class="ticker" aria-hidden="true">
+    <div v-if="!store.user" class="ticker" aria-hidden="true">
       <div class="ticker-track">
         <span v-for="n in 2" :key="n" class="ticker-set"><span v-for="t in ticker" :key="t">{{ t }} <i>▼</i></span></span>
       </div>
@@ -157,6 +161,13 @@ const done30 = computed(() => doneDays('30'))
 .sec-head.row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .more { color: var(--orange); font-weight: 800; white-space: nowrap; }
 .lib { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (max-width: 699px) {
+  .lib, .progs { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); scroll-padding-inline: var(--gutter); gap: 10px; }
+  .lib::-webkit-scrollbar, .progs::-webkit-scrollbar { display: none; }
+  .lib > * { flex: 0 0 44%; scroll-snap-align: start; }
+  .progs > * { flex: 0 0 82%; scroll-snap-align: start; }
+  .sec { padding-block: 40px 8px; }
+}
 @media (min-width: 700px) { .lib { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
 @media (min-width: 1000px) { .lib { grid-template-columns: repeat(4, 1fr); } }
 

@@ -4,10 +4,11 @@ import { useRoute } from 'vue-router'
 import ReelCard from '../components/ReelCard.vue'
 import NotFound from './NotFound.vue'
 import { videoById, videos, programs, categories, fmt } from '../data.js'
+import { ui } from '../stores/app.js'
 
 const route = useRoute()
 const v = computed(() => videoById(route.params.id))
-watchEffect(() => v.value && (document.title = `${v.value.title} — ${v.value.ar} | فورمة`))
+watchEffect(() => { if (v.value) { document.title = `${v.value.title} — ${v.value.ar} | فورمة`; ui.title = v.value.title } })
 const related = computed(() => videos.filter((x) => x.cat === v.value?.cat && x.id !== v.value?.id).slice(0, 4))
 const inPrograms = computed(() => programs.filter((p) => p.weeks.some((w) => w.pool.includes(v.value?.id))))
 const catLabel = computed(() => categories.find((c) => c.id === v.value?.cat)?.label)

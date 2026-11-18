@@ -27,6 +27,7 @@ const diff = computed(() => {
   if (store.weights.length < 2) return null
   return +(store.weights.at(-1).kg - store.weights[0].kg).toFixed(1)
 })
+const totalDone = computed(() => Object.values(store.completed).reduce((n, d) => n + d.length, 0))
 const methodLabel = (id) => payMethods.find((m) => m.id === id)?.label || id
 const statusLabel = { paid: 'مدفوع', pending: 'بيتراجع', rejected: 'متقبلش', cancelled: 'اتلغى' }
 async function out() { await logout().catch(() => {}); toast('اتسجّل خروجك'); router.push('/') }
@@ -34,13 +35,19 @@ async function out() { await logout().catch(() => {}); toast('اتسجّل خر�
 
 <template>
   <div class="wrap acc">
-    <header class="hello">
+    <header class="profile">
       <span class="avatar">{{ store.user.name.charAt(0) }}</span>
-      <div>
-        <h1>أهلًا يا {{ store.user.name }}</h1>
+      <div class="who">
+        <h1>{{ store.user.name }}</h1>
         <p class="muted en">{{ store.user.phone }}</p>
       </div>
+      <span class="badge-plan" :class="{ free: !sub }">{{ sub ? sub.name : 'مجاني' }}</span>
     </header>
+    <div class="pstats">
+      <div><b class="num">{{ totalDone }}</b><span>يوم خلّصته</span></div>
+      <div><b class="num">{{ store.weights.at(-1)?.kg ?? '—' }}</b><span>وزنك</span></div>
+      <div><b class="num" :class="diff !== null && diff <= 0 ? 'amber' : ''">{{ diff === null ? '—' : (diff > 0 ? '+' : '') + diff }}</b><span>التغيير</span></div>
+    </div>
 
     <div class="grid">
       <!-- subscription -->
@@ -120,16 +127,38 @@ async function out() { await logout().catch(() => {}); toast('اتسجّل خر�
       </div>
     </section>
 
-    <RouterLink v-if="store.user.is_admin" to="/admin/orders" class="admin-link">لوحة الأدمن (الطلبات والأسعار) ←</RouterLink>
-    <button class="logout" @click="out">تسجيل خروج</button>
+    <nav class="menu" aria-label="الإعدادات">
+      <RouterLink to="/pricing"><span class="ic">⭐</span>الباقات<i>‹</i></RouterLink>
+      <RouterLink to="/calculator"><span class="ic">🔥</span>احسب سعراتك تاني<i>‹</i></RouterLink>
+      <RouterLink to="/library"><span class="ic">🎬</span>مكتبة التمارين<i>‹</i></RouterLink>
+      <RouterLink v-if="store.user.is_admin" to="/admin/orders"><span class="ic">🛠️</span>لوحة الأدمن<i>‹</i></RouterLink>
+      <button @click="out"><span class="ic">🚪</span>تسجيل خروج</button>
+    </nav>
+    <p class="legal muted">المعلومات هنا للتوعية ومش بديل عن الدكتور. لو عندك وجع شديد أو مستمر، اكشف.</p>
   </div>
 </template>
 
 <style scoped>
-.acc { padding-block: 24px 40px; display: grid; gap: 26px; }
-.hello { display: flex; align-items: center; gap: 14px; }
-.avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--orange); color: #0a0a0a; display: grid; place-items: center; font-family: var(--f-head); font-size: 2rem; }
-.hello h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+.acc { padding-block: 20px 40px; display: grid; gap: 22px; }
+.profile { display: flex; align-items: center; gap: 14px; }
+.avatar { width: 64px; height: 64px; flex: none; border-radius: 20px; transform: rotate(-6deg); background: var(--orange); color: #0a0a0a; display: grid; place-items: center; font-family: var(--f-head); font-size: 2.1rem; box-shadow: 4px 4px 0 #fff; }
+.who { flex: 1; min-width: 0; }
+.who h1 { font-size: clamp(1.7rem, 6vw, 2.4rem); line-height: 1.1; }
+.badge-plan { align-self: flex-start; font-weight: 800; font-size: .75rem; padding: 4px 10px; border-radius: 99px; background: var(--orange); color: #0a0a0a; white-space: nowrap; }
+.badge-plan.free { background: #222; color: var(--muted); }
+.pstats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #232323; border-radius: 18px; background: #121212; margin-top: -8px; }
+.pstats div { display: grid; justify-items: center; padding: 14px 4px; }
+.pstats div + div { border-inline-start: 1px solid #232323; }
+.pstats b { font-size: 2rem; line-height: 1; }
+.pstats span { font-size: .72rem; color: var(--muted); font-weight: 800; }
+.menu { display: grid; border-radius: 18px; overflow: hidden; border: 1px solid #232323; background: #121212; }
+.menu a, .menu button { display: flex; align-items: center; gap: 12px; padding: 14px 16px; font-weight: 800; text-align: start; }
+.menu > * + * { border-top: 1px solid #1f1f1f; }
+.menu a:active, .menu button:active { background: #1a1a1a; }
+.menu .ic { width: 32px; height: 32px; border-radius: 9px; background: #1f1f1f; display: grid; place-items: center; }
+.menu i { margin-inline-start: auto; font-style: normal; color: var(--muted); font-size: 1.3rem; }
+.menu button { color: var(--danger); }
+.legal { font-size: .78rem; }
 .grid { display: grid; gap: 12px; }
 @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
 .card { padding: 18px; border-radius: 16px; background: #121212; border: 1px solid #232323; display: grid; gap: 8px; align-content: start; }
@@ -164,6 +193,5 @@ async function out() { await logout().catch(() => {}); toast('اتسجّل خر�
 .st.paid { color: var(--ok); }
 .st.pending { color: var(--amber); }
 .st.rejected { color: var(--danger); }
-.admin-link { justify-self: start; color: var(--amber); font-weight: 800; }
-.logout { justify-self: start; color: var(--muted); font-weight: 800; text-decoration: underline; }
+
 </style>

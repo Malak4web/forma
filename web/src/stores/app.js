@@ -2,6 +2,7 @@
 // progress) live in localStorage; everything about the account comes from /api/me.
 import { reactive, watch } from 'vue'
 import { api } from '../api.js'
+import { programs, meta } from '../data.js'
 
 const KEY = 'forma:v2'
 const local = (() => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') } catch { return {} } })()
@@ -103,4 +104,31 @@ export async function logWeight(kg) {
 export async function saveLead(lead) {
   await api('/leads', { method: 'POST', body: lead })
   store.calc = { ...store.calc, leadName: lead.name, leadPhone: lead.phone }
+}
+
+/* ---------- app shell (mobile) ---------- */
+
+// header title for inner pages; router resets it, pages may override (e.g. program name)
+export const ui = reactive({ title: '' })
+
+/** The workout to suggest right now: first unfinished day the user can open. */
+export function nextWorkout() {
+  const open = (p, d) => hasAccess(p.id) || d <= meta.freeDays
+  const firstOpen = (p) => {
+    const done = doneDays(p.id)
+    for (let d = 1; d <= p.days; d++) if (!done.includes(d)) return open(p, d) ? d : null
+    return null
+  }
+  const active = programs.filter((p) => hasAccess(p.id) || doneDays(p.id).length)
+  for (const p of active) {
+    const d = firstOpen(p)
+    if (d) return { program: p, day: d, started: doneDays(p.id).length > 0 }
+  }
+  const p = programs[0]
+  return p ? { program: p, day: firstOpen(p) || 1, started: false } : null
+}
+
+export function greeting() {
+  const h = new Date().getHours()
+  return h < 12 ? 'صباح الخير' : h < 18 ? 'نهارك سعيد' : 'مساء الخير'
 }

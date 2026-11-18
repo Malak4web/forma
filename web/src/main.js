@@ -18,4 +18,9 @@ async function boot() {
   }
   createApp(App).use(router).mount('#app')
 }
+
+// installable app: service worker only in production builds (keeps Vite HMR clean in dev)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+}
 boot()

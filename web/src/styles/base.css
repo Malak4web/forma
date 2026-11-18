@@ -26,6 +26,7 @@
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0; background: var(--black); color: #fff;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   font-family: var(--f-body); font-size: 16px; line-height: 1.7;
   -webkit-font-smoothing: antialiased; overflow-x: hidden;
 }
@@ -100,6 +101,23 @@ p { margin: 0; }
 .note { font-size: .82rem; color: var(--muted); border-inline-start: 3px solid var(--orange); padding-inline-start: 10px; }
 
 :focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+
+/* ---------- touch / app feel ---------- */
+@media (hover: none) {
+  /* no sticky hover lifts on phones — press feedback instead */
+  .reel:hover, .prog:hover, .card:hover, .tile:hover img, .tile:hover .tile-img img { transform: none !important; }
+  .reel:active, .prog:active, .card:active, .tile:active, .day:active, .it:active { transform: scale(.98) !important; transition: transform .1s; }
+  .btn:active { transform: scale(.96); }
+}
+@media (max-width: 959px) {
+  :root { --header: 56px; }
+  .page-head { padding-block: calc(var(--header) + 14px) 18px; }
+  .page-head h1 { font-size: clamp(2rem, 8vw, 2.6rem); }
+  .page-head .crumbs { display: none; } /* the app header already has back + title */
+  .crumbs { display: none; }
+  input, select, textarea { font-size: 16px; } /* stop iOS zoom-on-focus */
+}
+@media (display-mode: standalone) { body { overscroll-behavior-y: none; } }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

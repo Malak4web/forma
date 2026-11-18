@@ -1,12 +1,15 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Logo from './Logo.vue'
-import { store } from '../stores/app.js'
+import BottomSheet from './BottomSheet.vue'
+import { store, ui } from '../stores/app.js'
+import { canGoBack } from '../router.js'
 
 const props = defineProps({ overlay: Boolean, bare: Boolean })
 const route = useRoute()
-const open = ref(false)
+const router = useRouter()
+const more = ref(false)
 const scrolled = ref(false)
 const links = [
   { to: '/library', label: 'المكتبة' },
@@ -14,17 +17,30 @@ const links = [
   { to: '/calculator', label: 'احسب سعراتك' },
   { to: '/pricing', label: 'الباقات' },
 ]
+const isTab = computed(() => !!route.meta.tab)
 const onScroll = () => (scrolled.value = scrollY > 24)
 onMounted(() => { onScroll(); addEventListener('scroll', onScroll, { passive: true }) })
 onBeforeUnmount(() => removeEventListener('scroll', onScroll))
-watch(() => route.fullPath, () => (open.value = false))
-watch(open, (v) => (document.documentElement.style.overflow = v ? 'hidden' : ''))
+watch(() => route.fullPath, () => (more.value = false))
+
+function back() {
+  if (canGoBack()) return router.back()
+  const p = route.path
+  router.push(p.startsWith('/library/') ? '/library' : p.startsWith('/programs/') || p.startsWith('/workout/') ? '/programs' : p.startsWith('/checkout') ? '/pricing' : p.startsWith('/admin') ? '/account' : '/')
+}
 </script>
 
 <template>
-  <header class="hdr" :class="{ solid: !overlay || scrolled || open, bare }">
+  <header class="hdr" :class="{ solid: !overlay || scrolled, bare, inner: !isTab }">
     <div class="wrap hdr-in">
-      <Logo :size="38" />
+      <!-- mobile inner page: back + title -->
+      <button v-if="!isTab" class="m-back" aria-label="رجوع" @click="back">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+      <span v-if="!isTab" class="m-title">{{ ui.title }}</span>
+
+      <Logo :size="36" class="logo" />
+
       <template v-if="!bare">
         <nav class="links" aria-label="القائمة الرئيسية">
           <RouterLink v-for="l in links" :key="l.to" :to="l.to">{{ l.label }}</RouterLink>
@@ -35,61 +51,68 @@ watch(open, (v) => (document.documentElement.style.overflow = v ? 'hidden' : '')
           </RouterLink>
           <RouterLink v-else to="/login" class="login">دخول</RouterLink>
           <RouterLink v-if="!store.subscription" to="/calculator" class="btn btn-primary btn-sm cta">نظامك ببلاش</RouterLink>
-          <button class="burger" :aria-expanded="open" aria-controls="drawer" aria-label="القائمة" @click="open = !open">
-            <span :class="{ x: open }"></span>
+          <button class="more" aria-label="المزيد" @click="more = true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
           </button>
         </div>
       </template>
-      <RouterLink v-else :to="store.user ? '/account' : '/'" class="back">رجوع ←</RouterLink>
+      <button v-else class="back d-only" @click="back">رجوع ←</button>
     </div>
-
-    <Transition name="drawer">
-      <nav v-if="open" id="drawer" class="drawer" aria-label="القائمة">
-        <RouterLink to="/">الرئيسية</RouterLink>
-        <RouterLink v-for="l in links" :key="l.to" :to="l.to">{{ l.label }}</RouterLink>
-        <RouterLink v-if="store.user" to="/account">حسابي</RouterLink>
-        <RouterLink v-if="store.user?.is_admin" to="/admin/orders">لوحة الأدمن</RouterLink>
-        <template v-else>
-          <RouterLink to="/login">دخول</RouterLink>
-          <RouterLink to="/register" class="btn btn-primary">اعمل حساب</RouterLink>
-        </template>
-      </nav>
-    </Transition>
   </header>
   <div v-if="!overlay" class="hdr-space" aria-hidden="true"></div>
+
+  <BottomSheet :open="more" title="المزيد" @close="more = false">
+    <nav class="sheet-list">
+      <RouterLink to="/calculator"><span>🔥</span>احسب سعراتك وخد نظامك ببلاش</RouterLink>
+      <RouterLink to="/pricing"><span>⭐</span>الباقات والأسعار</RouterLink>
+      <RouterLink to="/programs"><span>📅</span>كل البرامج</RouterLink>
+      <RouterLink v-if="store.user?.is_admin" to="/admin/orders"><span>🛠️</span>لوحة الأدمن</RouterLink>
+      <template v-if="!store.user">
+        <RouterLink to="/login"><span>👋</span>دخول</RouterLink>
+        <RouterLink to="/register" class="btn btn-primary">اعمل حساب ببلاش</RouterLink>
+      </template>
+    </nav>
+  </BottomSheet>
 </template>
 
 <style scoped>
-.hdr { position: fixed; top: 0; inset-inline: 0; z-index: 50; transition: background-color .2s, border-color .2s; border-bottom: 1px solid transparent; }
-.hdr.solid { background: rgba(10,10,10,.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-color: #1c1c1c; }
-.hdr-space { height: var(--header); }
-.hdr-in { height: var(--header); display: flex; align-items: center; gap: 20px; }
+.hdr { position: fixed; top: 0; inset-inline: 0; z-index: 50; padding-top: env(safe-area-inset-top); transition: background-color .2s, border-color .2s; border-bottom: 1px solid transparent; }
+.hdr.solid { background: rgba(10,10,10,.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-color: #1c1c1c; }
+.hdr-space { height: calc(var(--header) + env(safe-area-inset-top)); }
+.hdr-in { height: var(--header); display: flex; align-items: center; gap: 16px; }
 .links { display: none; gap: 24px; margin-inline-start: 12px; font-weight: 700; }
 .links a { color: rgba(255,255,255,.8); padding-block: 6px; border-bottom: 2px solid transparent; }
 .links a:hover, .links a.router-link-active { color: #fff; border-color: var(--orange); }
 .acts { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
 .login { font-weight: 800; font-size: .92rem; padding: 6px 4px; }
-.login:hover { color: var(--orange); }
 .acc { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: .92rem; }
 .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--orange); color: #0a0a0a; display: grid; place-items: center; font-family: var(--f-head); font-size: 1.1rem; }
 .acc-l { display: none; }
 .cta { display: none; }
-.burger { width: 44px; height: 44px; display: grid; place-items: center; margin-inline-end: -8px; }
-.burger span, .burger span::before, .burger span::after { display: block; width: 22px; height: 2.5px; background: #fff; border-radius: 2px; position: relative; transition: transform .2s, background .2s; }
-.burger span::before, .burger span::after { content: ''; position: absolute; inset-inline: 0; }
-.burger span::before { top: -7px; } .burger span::after { top: 7px; }
-.burger span.x { background: transparent; }
-.burger span.x::before { transform: translateY(7px) rotate(45deg); }
-.burger span.x::after { transform: translateY(-7px) rotate(-45deg); }
+.more { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; margin-inline-end: -6px; }
+.more svg { width: 22px; fill: #fff; }
+.more:active { background: #1d1d1d; }
 .back { margin-inline-start: auto; font-weight: 800; color: var(--muted); }
-.back:hover { color: #fff; }
-@media (min-width: 420px) { .cta { display: inline-flex; } }
-@media (min-width: 960px) { .links { display: flex; } .burger { display: none; } .acc-l { display: inline; } }
+.m-back, .m-title { display: none; }
 
-.drawer { position: fixed; top: var(--header); inset-inline: 0; bottom: 0; background: #0a0a0a; padding: 20px var(--gutter); display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
-.drawer a:not(.btn) { font-family: var(--f-head); font-size: 1.8rem; padding: 10px 0; border-bottom: 1px solid #1a1a1a; }
-.drawer a.router-link-exact-active:not(.btn) { color: var(--orange); }
-.drawer .btn { margin-top: 18px; }
-.drawer-enter-active, .drawer-leave-active { transition: opacity .2s, transform .2s; }
-.drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateY(-8px); }
+/* ---------- mobile app chrome ---------- */
+@media (max-width: 959px) {
+  .acc, .login { display: none; } /* account lives in the tab bar */
+  .inner .logo { display: none; }
+  .inner .m-back { display: grid; place-items: center; width: 40px; height: 40px; margin-inline-start: -8px; border-radius: 50%; }
+  .inner .m-back:active { background: #1d1d1d; }
+  .m-back svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .inner .m-title { display: block; font-family: var(--f-head); font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+  .inner .acts { margin-inline-start: 0; }
+  .inner .cta { display: none !important; }
+  .d-only { display: none; }
+}
+@media (min-width: 420px) { .cta { display: inline-flex; } }
+@media (min-width: 960px) { .links { display: flex; } .more { display: none; } .acc-l { display: inline; } }
+
+.sheet-list { display: grid; gap: 4px; padding-bottom: 6px; }
+.sheet-list a:not(.btn) { display: flex; align-items: center; gap: 14px; padding: 14px 6px; border-radius: 12px; font-weight: 800; font-size: 1.05rem; }
+.sheet-list a:not(.btn):active { background: #1d1d1d; }
+.sheet-list a span { width: 36px; height: 36px; border-radius: 10px; background: #1f1f1f; display: grid; place-items: center; font-size: 1.1rem; }
+.sheet-list .btn { margin-top: 10px; }
 </style>
