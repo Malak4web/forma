@@ -24,6 +24,7 @@ class TransformationController extends Controller
         $data = $request->validate([
             'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'title' => ['nullable', 'string', 'max:80'],
+            'age' => ['nullable', 'integer', 'min:10', 'max:99'],
             'subtitle' => ['nullable', 'string', 'max:120'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'is_active' => ['nullable', 'boolean'],
@@ -38,6 +39,7 @@ class TransformationController extends Controller
 
         $item = Transformation::create([
             'title' => $data['title'] ?? null,
+            'age' => $data['age'] ?? null,
             'subtitle' => $data['subtitle'] ?? null,
             'image_path' => $path,
             'sort' => $nextSort,
@@ -52,6 +54,7 @@ class TransformationController extends Controller
         $data = $request->validate([
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'title' => ['nullable', 'string', 'max:80'],
+            'age' => ['nullable', 'integer', 'min:10', 'max:99'],
             'subtitle' => ['nullable', 'string', 'max:120'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'is_active' => ['nullable', 'boolean'],
@@ -59,6 +62,7 @@ class TransformationController extends Controller
 
         $updates = [
             'title' => array_key_exists('title', $data) ? $data['title'] : $transformation->title,
+            'age' => array_key_exists('age', $data) ? $data['age'] : $transformation->age,
             'subtitle' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $transformation->subtitle,
             'sort' => $data['sort'] ?? $transformation->sort,
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $transformation->is_active,

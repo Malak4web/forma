@@ -12,11 +12,12 @@ const busy = reactive({})
 
 const files = ref([])
 const title = ref('')
+const age = ref('')
 const subtitle = ref('')
 const isActive = ref(true)
 const fileInput = ref(null)
 
-const editing = ref(null) // { id, title, subtitle, sort, is_active, image_url, newFile }
+const editing = ref(null) // { id, title, age, subtitle, sort, is_active, image_url, newFile }
 
 async function load() {
   loading.value = true
@@ -43,6 +44,7 @@ async function upload() {
       const form = new FormData()
       form.append('image', file)
       if (files.value.length === 1 && title.value.trim()) form.append('title', title.value.trim())
+      if (files.value.length === 1 && age.value !== '' && age.value !== null) form.append('age', String(Number(age.value)))
       if (files.value.length === 1 && subtitle.value.trim()) form.append('subtitle', subtitle.value.trim())
       form.append('is_active', isActive.value ? '1' : '0')
       const res = await api('/admin/transformations', { method: 'POST', form })
@@ -51,6 +53,7 @@ async function upload() {
     }
     files.value = []
     title.value = ''
+    age.value = ''
     subtitle.value = ''
     if (fileInput.value) fileInput.value.value = ''
     await loadContent()
@@ -67,6 +70,7 @@ function startEdit(item) {
   editing.value = {
     id: item.id,
     title: item.title || '',
+    age: item.age ?? '',
     subtitle: item.subtitle || '',
     sort: item.sort,
     is_active: item.is_active,
@@ -83,6 +87,8 @@ async function saveEdit() {
     const form = new FormData()
     form.append('_method', 'PUT')
     form.append('title', ed.title.trim())
+    if (ed.age !== '' && ed.age !== null) form.append('age', String(Number(ed.age)))
+    else form.append('age', '')
     form.append('subtitle', ed.subtitle.trim())
     form.append('sort', String(Number(ed.sort) || 0))
     form.append('is_active', ed.is_active ? '1' : '0')
@@ -161,10 +167,14 @@ async function removeItem(item) {
           <input v-model="isActive" type="checkbox" /> ظاهرة في الموقع
         </label>
       </div>
-      <div v-if="files.length <= 1" class="row2">
+      <div v-if="files.length <= 1" class="row3">
         <label class="field">
-          <span>اسم / عنوان (اختياري)</span>
-          <input v-model="title" class="input" placeholder="مثال: أحمد — 12 أسبوع" maxlength="80" />
+          <span>الاسم (اختياري)</span>
+          <input v-model="title" class="input" placeholder="مثال: كريم محمود" maxlength="80" />
+        </label>
+        <label class="field">
+          <span>السن (اختياري)</span>
+          <input v-model="age" type="number" min="10" max="99" class="input ltr" placeholder="28" />
         </label>
         <label class="field">
           <span>تفصيل / نتيجة (اختياري)</span>
@@ -186,9 +196,12 @@ async function removeItem(item) {
           <span v-if="!item.is_active" class="t-off">مخفي</span>
         </div>
         <div class="t-body">
-          <b v-if="item.title">{{ item.title }}</b>
+          <div v-if="item.title || item.age" class="t-meta">
+            <b v-if="item.title">{{ item.title }}</b>
+            <span v-if="item.age" class="t-age"><span class="num">{{ item.age }}</span> سنة</span>
+          </div>
           <small v-if="item.subtitle" class="muted">{{ item.subtitle }}</small>
-          <small v-if="!item.title && !item.subtitle" class="muted">بدون نص</small>
+          <small v-if="!item.title && !item.age && !item.subtitle" class="muted">بدون نص</small>
           <div class="t-acts">
             <button type="button" class="btn btn-ghost btn-sm" :disabled="busy[item.id]" @click="startEdit(item)">تعديل</button>
             <button type="button" class="btn btn-ghost btn-sm" :disabled="busy[item.id]" @click="toggleActive(item)">
@@ -212,10 +225,14 @@ async function removeItem(item) {
           <span>تغيير الصورة (اختياري)</span>
           <input type="file" accept="image/png,image/jpeg,image/webp" class="input" @change="(e) => (editing.newFile = e.target.files?.[0] || null)" />
         </label>
-        <div class="row2">
+        <div class="row3">
           <label class="field">
-            <span>الاسم / العنوان</span>
+            <span>الاسم</span>
             <input v-model="editing.title" class="input" maxlength="80" />
+          </label>
+          <label class="field">
+            <span>السن</span>
+            <input v-model="editing.age" type="number" min="10" max="99" class="input ltr" />
           </label>
           <label class="field">
             <span>الترتيب</span>
@@ -242,8 +259,8 @@ async function removeItem(item) {
 .card { background: #141414; border: 1px solid #222; border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
 .add-box h2 { font-size: 1.25rem; }
 .add-box .btn { justify-self: start; }
-.row2 { display: grid; gap: 10px; }
-@media (min-width: 600px) { .row2 { grid-template-columns: 1fr 1fr; } }
+.row2, .row3 { display: grid; gap: 10px; }
+@media (min-width: 600px) { .row2 { grid-template-columns: 1fr 1fr; } .row3 { grid-template-columns: 1.4fr .8fr 1fr; } }
 .field { display: grid; gap: 5px; }
 .field span { font-size: .85rem; color: var(--muted); font-weight: 700; }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; cursor: pointer; }
@@ -261,7 +278,9 @@ async function removeItem(item) {
 .t-sort { position: absolute; top: 8px; inset-inline-start: 8px; background: rgba(10, 10, 10, .85); color: var(--amber); padding: 2px 8px; border-radius: 999px; font-size: .8rem; border: 1px solid #333; }
 .t-off { position: absolute; top: 8px; inset-inline-end: 8px; background: #2a1818; color: #ff8a8a; padding: 2px 8px; border-radius: 999px; font-size: .75rem; font-weight: 800; }
 .t-body { padding: 10px; display: grid; gap: 6px; }
+.t-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .t-body b { font-size: .9rem; }
+.t-age { font-size: .74rem; font-weight: 800; color: var(--amber); background: #221810; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
 .t-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .t-acts .btn { padding: 5px 9px; font-size: .78rem; }
 .danger { color: #ff7a7a; border-color: #3a2020; }

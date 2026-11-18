@@ -53,13 +53,15 @@ class TransformationsTest extends TestCase
         $file = UploadedFile::fake()->image('before-after.png', 400, 500);
         $create = $this->actingAs($admin)->post('/api/admin/transformations', [
             'image' => $file,
-            'title' => 'كريم — 8 أسابيع',
+            'title' => 'كريم محمود',
+            'age' => 28,
             'subtitle' => '-10 كيلو',
             'is_active' => true,
         ]);
 
         $create->assertCreated()
-            ->assertJsonPath('data.title', 'كريم — 8 أسابيع')
+            ->assertJsonPath('data.title', 'كريم محمود')
+            ->assertJsonPath('data.age', 28)
             ->assertJsonPath('data.subtitle', '-10 كيلو');
 
         $id = $create->json('data.id');
@@ -71,6 +73,7 @@ class TransformationsTest extends TestCase
         $update = $this->actingAs($admin)->post("/api/admin/transformations/{$id}", [
             '_method' => 'PUT',
             'title' => 'كريم — 12 أسبوع',
+            'age' => 29,
             'sort' => 5,
             'is_active' => false,
             'image' => $newFile,
@@ -78,6 +81,7 @@ class TransformationsTest extends TestCase
 
         $update->assertOk()
             ->assertJsonPath('data.title', 'كريم — 12 أسبوع')
+            ->assertJsonPath('data.age', 29)
             ->assertJsonPath('data.sort', 5)
             ->assertJsonPath('data.is_active', false);
 

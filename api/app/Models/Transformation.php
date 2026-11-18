@@ -11,6 +11,7 @@ class Transformation extends Model
 
     protected $fillable = [
         'title',
+        'age',
         'subtitle',
         'image_path',
         'sort',
@@ -20,6 +21,7 @@ class Transformation extends Model
     protected function casts(): array
     {
         return [
+            'age' => 'integer',
             'sort' => 'integer',
             'is_active' => 'boolean',
         ];
@@ -35,6 +37,7 @@ class Transformation extends Model
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'age' => $this->age,
             'subtitle' => $this->subtitle,
             'image_url' => $this->imageUrl(),
             'sort' => $this->sort,

@@ -42,9 +42,12 @@ onBeforeUnmount(() => {
               @click="active = item"
             >
               <img :src="item.image_url" :alt="item.title || 'تحول فورمة'" loading="lazy" decoding="async" />
-              <div v-if="item.title || item.subtitle" class="tr-cap">
-                <b v-if="item.title">{{ item.title }}</b>
-                <span v-if="item.subtitle">{{ item.subtitle }}</span>
+              <div v-if="item.title || item.age || item.subtitle" class="tr-cap">
+                <div class="tr-cap-top">
+                  <b v-if="item.title" class="tr-name">{{ item.title }}</b>
+                  <span v-if="item.age" class="tr-age"><span class="num">{{ item.age }}</span> سنة</span>
+                </div>
+                <span v-if="item.subtitle" class="tr-sub">{{ item.subtitle }}</span>
               </div>
             </button>
           </div>
@@ -64,9 +67,12 @@ onBeforeUnmount(() => {
               @click="active = item"
             >
               <img :src="item.image_url" :alt="item.title || 'تحول فورمة'" loading="lazy" decoding="async" />
-              <div v-if="item.title || item.subtitle" class="tr-cap">
-                <b v-if="item.title">{{ item.title }}</b>
-                <span v-if="item.subtitle">{{ item.subtitle }}</span>
+              <div v-if="item.title || item.age || item.subtitle" class="tr-cap">
+                <div class="tr-cap-top">
+                  <b v-if="item.title" class="tr-name">{{ item.title }}</b>
+                  <span v-if="item.age" class="tr-age"><span class="num">{{ item.age }}</span> سنة</span>
+                </div>
+                <span v-if="item.subtitle" class="tr-sub">{{ item.subtitle }}</span>
               </div>
             </button>
           </div>
@@ -79,8 +85,11 @@ onBeforeUnmount(() => {
         <div class="tr-box">
           <button type="button" class="tr-close" aria-label="إغلاق" @click="active = null">✕</button>
           <img :src="active.image_url" :alt="active.title || 'تحول فورمة'" />
-          <div v-if="active.title || active.subtitle" class="tr-box-cap">
-            <b v-if="active.title">{{ active.title }}</b>
+          <div v-if="active.title || active.age || active.subtitle" class="tr-box-cap">
+            <div class="tr-cap-top">
+              <b v-if="active.title">{{ active.title }}</b>
+              <span v-if="active.age" class="tr-age"><span class="num">{{ active.age }}</span> سنة</span>
+            </div>
             <p v-if="active.subtitle">{{ active.subtitle }}</p>
           </div>
         </div>
@@ -141,15 +150,32 @@ onBeforeUnmount(() => {
   position: absolute;
   inset-inline: 0;
   bottom: 0;
-  padding: 24px 10px 8px;
-  background: linear-gradient(to top, rgba(0, 0, 0, .88), transparent);
+  padding: 36px 12px 11px;
+  background: linear-gradient(to top, rgba(8, 8, 8, .96) 0%, rgba(8, 8, 8, .72) 55%, transparent 100%);
   display: grid;
-  gap: 2px;
+  gap: 3px;
   text-align: start;
   direction: rtl;
 }
-.tr-cap b { font-size: .88rem; color: #fff; }
-.tr-cap span { font-size: .76rem; color: var(--amber); font-weight: 700; }
+.tr-cap-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.tr-name { font-size: .92rem; color: #fff; font-weight: 800; line-height: 1.2; text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+.tr-age {
+  flex: 0 0 auto;
+  font-size: .74rem;
+  font-weight: 800;
+  color: #0a0a0a;
+  background: var(--orange);
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.3;
+}
+.tr-age .num { font-size: .85rem; }
+.tr-sub { font-size: .75rem; color: var(--amber); font-weight: 700; }
 
 @media (min-width: 700px) {
   .tr-rows { gap: 16px; }
