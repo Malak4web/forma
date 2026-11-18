@@ -1,0 +1,118 @@
+name: Build & Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install & Build Frontend (web)
+        run: |
+          npm --prefix web ci
+          npm --prefix web run build
+
+      - name: Setup PHP 8.3 & Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, gd, zip, fileinfo
+          tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install Backend Dependencies (api)
+        run: |
+          composer --working-dir=api install \
+            --no-dev \
+            --prefer-dist \
+            --optimize-autoloader \
+            --no-interaction
+
+      - name: Assemble SPA inside api/public
+        run: cp -R web/dist/. api/public/
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy to Hostinger via rsync over SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '65002' }}
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSHPASS" ] || [ -z "$DEPLOY_PATH" ]; then
+            echo "Missing required secrets: SSH_HOST, SSH_USER, SSH_PASSWORD, DEPLOY_PATH" >&2
+            exit 1
+          fi
+
+          SSH_OPTS="-p $SSH_PORT -o StrictHostKeyChecking=accept-new"
+
+          sshpass -e ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
+
+          rsync -az --delete \
+            -e "sshpass -e ssh $SSH_OPTS" \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='storage/' \
+            --exclude='bootstrap/cache/*.php' \
+            --exclude='tests/' \
+            --exclude='node_modules/' \
+            --exclude='.git/' \
+            --exclude='database/*.sqlite' \
+            api/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+          sshpass -e ssh $SSH_OPTS "$SSH_USER@$SSH_HOST" "bash -s" <<EOF
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+
+            mkdir -p storage/app/private/receipts \
+              storage/app/public \
+              storage/framework/cache/data \
+              storage/framework/sessions \
+              storage/framework/views \
+              storage/logs \
+              bootstrap/cache
+
+            PHP_BIN="\$(command -v php83 || command -v /opt/alt/php83/usr/bin/php || command -v php)"
+
+            if [ -f .env ]; then
+              \$PHP_BIN artisan migrate --force
+              [ -L public/storage ] || \$PHP_BIN artisan storage:link || true
+              \$PHP_BIN artisan config:cache
+              \$PHP_BIN artisan route:cache
+              \$PHP_BIN artisan view:cache
+              \$PHP_BIN artisan queue:restart || true
+            else
+              echo "WARNING: .env not found in $DEPLOY_PATH — skipping artisan migrate/cache."
+            fi
+          EOF
+

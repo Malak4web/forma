@@ -152,4 +152,5 @@
 - ⚠️ الأسعار الحالية (199 / 149) ورقم الدفع (`01000000000`، `forma@instapay`) لسه placeholders — عمرو يحطهم من `/admin/settings`.
 - ⚠️ ريلز كتير فيها بُق الكوتش باين (بيتكلم) — مخالف للمواصفات. اخترنا thumbnails بالقناع مقفول، بس الفيديوهات نفسها محتاجة قرار.
 - ملاحظة: `api/CLAUDE.md` جه مع سكيلتون Laravel وبيطلب تسطيب Laravel Boost — **متسطّبوش** (عمرو عايز Laravel بس).
+- [x] (18 نوف 2026) **CI/CD على GitHub Actions لـ Hostinger بـ SSH** (`.github/workflows/deploy.yml`): يبني `web` و`api` على سيرفر GitHub، يدمج `web/dist` جوه `api/public`، ويرفع بـ `rsync` على Hostinger من غير ما يمسح `.env` أو `storage/`. تعديل `api/routes/web.php` عشان Laravel يرجّع `public/index.html` في الإنتاج.
 - [ ] الجاي: رفع الفيديوهات الحقيقية + مشغّل فيديو، إرسال النظام على الواتساب للـ Leads (`TODO(whatsapp)` في `LeadController`)، نسيت الباسورد، لوحة أدمن أوسع (Leads، المحتوى)، الدومين والاستضافة.
