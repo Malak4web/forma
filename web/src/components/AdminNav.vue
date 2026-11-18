@@ -2,6 +2,7 @@
   <nav class="anav" aria-label="لوحة الأدمن">
     <RouterLink to="/admin/orders">الطلبات</RouterLink>
     <RouterLink to="/admin/settings">الأسعار والدفع</RouterLink>
+    <RouterLink to="/admin/transformations">التحولات</RouterLink>
   </nav>
 </template>
 

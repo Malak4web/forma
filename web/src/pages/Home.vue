@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import ReelCard from '../components/ReelCard.vue'
 import Faq from '../components/Faq.vue'
 import TodayCard from '../components/TodayCard.vue'
+import TransformationsMarquee from '../components/TransformationsMarquee.vue'
 import { videos, categories, programs, steps } from '../data.js'
 import { store, doneDays } from '../stores/app.js'
 
@@ -79,6 +80,8 @@ const done30 = computed(() => doneDays('30'))
         </div>
       </div>
     </section>
+
+    <TransformationsMarquee />
 
     <!-- PROGRAMS -->
     <section class="sec wrap">

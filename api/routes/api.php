@@ -7,6 +7,7 @@
 
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\TransformationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\LeadController;
@@ -47,5 +48,10 @@ Route::middleware('auth')->group(function () {
         Route::get('settings', [SettingsController::class, 'show']);
         Route::put('plans/{plan}', [SettingsController::class, 'updatePlan']);
         Route::put('payment-methods/{method}', [SettingsController::class, 'updatePayment']);
+
+        Route::get('transformations', [TransformationController::class, 'index']);
+        Route::post('transformations', [TransformationController::class, 'store']);
+        Route::put('transformations/{transformation}', [TransformationController::class, 'update']);
+        Route::delete('transformations/{transformation}', [TransformationController::class, 'destroy']);
     });
 });

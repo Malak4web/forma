@@ -6,6 +6,7 @@ import { api } from './api.js'
 export const videos = reactive([])
 export const programs = reactive([])
 export const plans = reactive([])
+export const transformations = reactive([])
 export const payMethods = reactive([])
 export const meta = reactive({ freeDays: 3, loaded: false })
 
@@ -14,6 +15,7 @@ export async function loadContent() {
   videos.splice(0, videos.length, ...c.exercises)
   programs.splice(0, programs.length, ...c.programs)
   plans.splice(0, plans.length, ...c.plans)
+  transformations.splice(0, transformations.length, ...(c.transformations || []))
   payMethods.splice(0, payMethods.length, ...c.payment_methods)
   meta.freeDays = c.free_days
   meta.loaded = true

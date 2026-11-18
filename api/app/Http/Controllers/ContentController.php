@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Exercise;
 use App\Models\Plan;
 use App\Models\Program;
+use App\Models\Transformation;
 use App\Payments\PaymentManager;
 use App\Support\ProgramDays;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,7 @@ class ContentController extends Controller
             'exercises' => Exercise::orderBy('sort')->get()->map->toPublic(),
             'programs' => Program::where('is_active', true)->with(['weeks', 'plans' => fn ($q) => $q->withCount('programs')])->orderBy('sort')->get()->map->toPublic(),
             'plans' => Plan::where('is_active', true)->with('programs')->orderBy('sort')->get()->map->toPublic(),
+            'transformations' => Transformation::where('is_active', true)->orderBy('sort')->orderBy('id')->get()->map->toPublic(),
             'payment_methods' => $payments->publicList(),
             'free_days' => Program::FREE_DAYS,
         ])->header('Cache-Control', 'no-cache'); // admins edit prices/payment details live

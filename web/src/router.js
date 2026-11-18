@@ -20,6 +20,7 @@ const routes = [
   { path: '/workout/:program/:day', component: p('Workout'), meta: { title: 'تمرين اليوم', bare: true } },
   { path: '/admin/orders', component: p('AdminOrders'), meta: { title: 'الطلبات (أدمن)', auth: true, admin: true } },
   { path: '/admin/settings', component: p('AdminSettings'), meta: { title: 'الأسعار والدفع (أدمن)', auth: true, admin: true } },
+  { path: '/admin/transformations', component: p('AdminTransformations'), meta: { title: 'التحولات (أدمن)', auth: true, admin: true } },
   { path: '/:pathMatch(.*)*', component: p('NotFound'), meta: { title: 'الصفحة مش موجودة' } },
 ]
 
