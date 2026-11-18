@@ -31,10 +31,10 @@ jobs:
           npm --prefix web install --no-audit --no-fund
           npm --prefix web run build
 
-      - name: Setup PHP 8.4 & Composer
+      - name: Setup PHP 8.3 & Composer
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.3'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, gd, zip, fileinfo
           tools: composer:v2
 
@@ -42,12 +42,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
-          key: composer-${{ runner.os }}-${{ hashFiles('api/composer.lock') }}
+          key: composer-${{ runner.os }}-${{ hashFiles('api/composer.json') }}
           restore-keys: composer-${{ runner.os }}-
 
       - name: Install Backend Dependencies (api)
         run: |
-          composer --working-dir=api install \
+          composer --working-dir=api update \
             --no-dev \
             --prefer-dist \
             --optimize-autoloader \
