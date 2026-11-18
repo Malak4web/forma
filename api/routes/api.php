@@ -15,11 +15,22 @@ use App\Http\Controllers\MeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProgressController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('csrf', [AuthController::class, 'csrf']);
 
 // public
 Route::get('content', [ContentController::class, 'index']);
+Route::get('media/transformations/{file}', function (string $file) {
+    $path = 'transformations/'.basename($file);
+    $disk = Storage::disk('public');
+
+    abort_unless($disk->exists($path), 404);
+
+    return response()->file($disk->path($path), [
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->where('file', '[A-Za-z0-9._-]+');
 Route::get('programs/{program}/days/{day}', [ContentController::class, 'day'])->whereNumber('day');
 Route::post('leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
 Route::get('me', [MeController::class, 'show']);

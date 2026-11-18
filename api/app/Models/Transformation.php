@@ -27,7 +27,7 @@ class Transformation extends Model
 
     public function imageUrl(): string
     {
-        return '/storage/'.ltrim($this->image_path, '/');
+        return '/api/media/'.ltrim($this->image_path, '/');
     }
 
     public function toPublic(): array

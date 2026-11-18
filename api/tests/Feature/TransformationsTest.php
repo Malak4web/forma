@@ -31,7 +31,7 @@ class TransformationsTest extends TestCase
 
         $res->assertJsonCount(2, 'transformations');
         $res->assertJsonPath('transformations.0.title', 'أول');
-        $res->assertJsonPath('transformations.0.image_url', '/storage/transformations/a.webp');
+        $res->assertJsonPath('transformations.0.image_url', '/api/media/transformations/a.webp');
         $res->assertJsonPath('transformations.1.title', 'تاني');
     }
 
@@ -100,5 +100,7 @@ class TransformationsTest extends TestCase
         $this->assertSame(25, Transformation::count());
         Storage::disk('public')->assertExists('transformations/forma-before-after-01.webp');
         Storage::disk('public')->assertExists('transformations/forma-before-after-25.webp');
+
+        $this->get('/api/media/transformations/forma-before-after-01.webp')->assertOk();
     }
 }
