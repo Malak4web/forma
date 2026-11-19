@@ -14,6 +14,7 @@ const scrolled = ref(false)
 const links = [
   { to: '/library', label: 'المكتبة' },
   { to: '/programs', label: 'البرامج' },
+  { to: '/diets', label: 'أنظمة الأكل' },
   { to: '/calculator', label: 'احسب سعراتك' },
   { to: '/pricing', label: 'الباقات' },
 ]
@@ -63,6 +64,7 @@ function back() {
 
   <BottomSheet :open="more" title="المزيد" @close="more = false">
     <nav class="sheet-list">
+      <RouterLink to="/diets"><span>🥑</span>أنظمة الأكل · خطط 30 يوم</RouterLink>
       <RouterLink to="/calculator"><span>🔥</span>احسب سعراتك وخد نظامك ببلاش</RouterLink>
       <RouterLink to="/pricing"><span>⭐</span>الباقات والأسعار</RouterLink>
       <RouterLink to="/programs"><span>📅</span>كل البرامج</RouterLink>

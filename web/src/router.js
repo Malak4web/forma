@@ -20,6 +20,8 @@ const routes = [
   { path: '/checkout/:plan', component: pick('Checkout', 'MCheckout'), meta: { m: true, title: 'الدفع', auth: true, bare: true } },
   { path: '/checkout/result/:order', component: pick('CheckoutResult', 'MOrder'), meta: { m: true, title: 'حالة الطلب', auth: true, bare: true } },
   { path: '/account', component: pick('Account', 'MAccount'), meta: { m: true, title: 'حسابي', auth: true, tab: true } },
+  { path: '/diets', component: p('Diets'), meta: { m: true, title: 'أنظمة الأكل' } },
+  { path: '/diets/:slug', component: p('Diet'), meta: { m: true, title: 'نظام أكل' } },
   { path: '/workout/:program/:day', component: p('Workout'), meta: { m: true, title: 'تمرين اليوم', bare: true } },
   { path: '/admin/claim', component: p('AdminClaim'), meta: { title: 'تفعيل الأدمن', auth: true } },
   { path: '/admin', component: p('AdminDashboard'), meta: { title: 'لوحة التحكم (أدمن)', auth: true, admin: true } },

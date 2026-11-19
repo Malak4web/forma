@@ -5,6 +5,7 @@ import MRail from './MRail.vue'
 import TransformationsMarquee from '../components/TransformationsMarquee.vue'
 import { videos, programs, programDay, plans } from '../data.js'
 import { store, nextWorkout, doneDays, hasAccess, greeting } from '../stores/app.js'
+import { DIETS } from '../diets/data.js'
 
 const next = computed(() => nextWorkout())
 const nextDay = computed(() => (next.value ? programDay(next.value.program, next.value.day) : null))
@@ -161,6 +162,15 @@ const goals = [
       </RouterLink>
     </MRail>
 
+    <MRail title="أنظمة الأكل" :total="DIETS.length" all="/diets" all-label="كل الأنظمة">
+      <RouterLink v-for="dt in DIETS" :key="dt.slug" :to="`/diets/${dt.slug}`" class="dcard" :style="{ '--da': dt.theme.a, '--dbg': dt.theme.bg, '--dink': dt.theme.ink }">
+        <span class="de">{{ dt.emoji }}</span>
+        <b>{{ dt.name }}</b>
+        <small class="en">{{ dt.en }}</small>
+        <span class="d30"><span class="num">30</span> يوم</span>
+      </RouterLink>
+    </MRail>
+
     <!-- transformations: unchanged component -->
     <TransformationsMarquee />
 
@@ -235,6 +245,14 @@ const goals = [
 .goal { width: 70px; display: grid; justify-items: center; gap: 6px; font-size: .74rem; font-weight: 800; }
 .goal > span { width: 64px; height: 64px; border-radius: 50%; padding: 3px; background: conic-gradient(var(--orange), var(--amber), var(--orange)); }
 .goal img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center 35%; border: 3px solid var(--black); }
+
+/* diets rail */
+.dcard { position: relative; width: 140px; height: 150px; padding: 12px; border-radius: 20px; background: var(--dbg); color: var(--dink); border: 1px solid color-mix(in srgb, var(--da) 40%, transparent); display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; overflow: hidden; }
+.dcard::before { content: ''; position: absolute; width: 120px; height: 120px; border-radius: 50%; top: -50px; inset-inline-end: -40px; background: radial-gradient(circle, color-mix(in srgb, var(--da) 45%, transparent), transparent 70%); }
+.de { position: absolute; top: 10px; inset-inline-start: 12px; font-size: 2rem; }
+.dcard b { font-family: var(--f-head); font-weight: 400; font-size: 1.25rem; line-height: 1.1; }
+.dcard .en { color: var(--da); font-size: .78rem; letter-spacing: .12em; justify-self: start; align-self: flex-start; }
+.d30 { position: absolute; top: 12px; inset-inline-end: 10px; font-size: .62rem; font-weight: 900; background: var(--da); color: #0a0a0a; padding: 2px 7px; border-radius: 99px; }
 
 /* programs rail */
 .prog { width: 250px; overflow: hidden; }
