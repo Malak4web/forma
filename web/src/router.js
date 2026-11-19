@@ -21,6 +21,7 @@ const routes = [
   { path: '/checkout/result/:order', component: pick('CheckoutResult', 'MOrder'), meta: { m: true, title: 'حالة الطلب', auth: true, bare: true } },
   { path: '/account', component: pick('Account', 'MAccount'), meta: { m: true, title: 'حسابي', auth: true, tab: true } },
   { path: '/workout/:program/:day', component: p('Workout'), meta: { m: true, title: 'تمرين اليوم', bare: true } },
+  { path: '/admin/claim', component: p('AdminClaim'), meta: { title: 'تفعيل الأدمن', auth: true } },
   { path: '/admin/orders', component: p('AdminOrders'), meta: { title: 'الطلبات (أدمن)', auth: true, admin: true } },
   { path: '/admin/settings', component: p('AdminSettings'), meta: { title: 'الأسعار والدفع (أدمن)', auth: true, admin: true } },
   { path: '/admin/transformations', component: p('AdminTransformations'), meta: { title: 'التحولات (أدمن)', auth: true, admin: true } },

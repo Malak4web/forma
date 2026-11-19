@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TransformationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminClaimController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MeController;
@@ -41,6 +42,7 @@ Route::post('auth/login', [AuthController::class, 'login']);
 
 Route::middleware('auth')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('admin/claim', AdminClaimController::class)->middleware('throttle:5,1');
 
     Route::post('weights', [MeController::class, 'storeWeight']);
     Route::post('progress/import', [ProgressController::class, 'import']);
