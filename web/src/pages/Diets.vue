@@ -37,10 +37,11 @@ const cardStyle = (d) => ({
         <span class="en">{{ d.en }}</span>
         <h2>{{ d.name }}</h2>
         <p>{{ d.tagline }}</p>
-        <div class="macros" :aria-label="`كارب ${d.macros.c}% بروتين ${d.macros.p}% دهون ${d.macros.f}%`">
+        <div v-if="d.macros" class="macros" :aria-label="`كارب ${d.macros.c}% بروتين ${d.macros.p}% دهون ${d.macros.f}%`">
           <i class="c" :style="{ flex: d.macros.c || 0.001 }"></i><i class="p" :style="{ flex: d.macros.p }"></i><i class="f" :style="{ flex: d.macros.f }"></i>
         </div>
-        <div class="legend">
+        <div v-if="!d.macros" class="legend"><span>✓ <b class="num">{{ d.eat.length }}</b> مجموعات مسموحة</span><span>✕ <b class="num">{{ d.avoid.length }}</b> ممنوعة</span></div>
+        <div v-else class="legend">
           <span><b class="num">{{ d.macros.c }}%</b> كارب</span><span><b class="num">{{ d.macros.p }}%</b> بروتين</span><span><b class="num">{{ d.macros.f }}%</b> دهون</span>
         </div>
         <div class="foot">

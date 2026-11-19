@@ -20,6 +20,8 @@ const tiles = {
   pulse: (c) => `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40'><path d='M0 20h40l6-12 8 26 6-14h60' fill='none' stroke='${c}' stroke-width='1.4'/></svg>`,
   // carb cycling: alternating bars
   cycle: (c) => `<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><g fill='${c}'><rect x='6' y='10' width='6' height='30' rx='3'/><rect x='21' y='26' width='6' height='14' rx='3'/><rect x='36' y='18' width='6' height='22' rx='3'/></g></svg>`,
+  // tayyibat: 8-point arabesque star
+  arabesque: (c) => `<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><g fill='none' stroke='${c}' stroke-width='1.2'><path d='M36 14l6 9 10-2-2 10 9 6-9 6 2 10-10-2-6 9-6-9-10 2 2-10-9-6 9-6-2-10 10 2z'/><circle cx='36' cy='36' r='6'/></g></svg>`,
   // paleo: stones
   stone: (c) => `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><g fill='none' stroke='${c}' stroke-width='1.2'><path d='M10 30c4-10 18-12 24-4s-2 18-12 16-14-4-12-12z'/><path d='M50 60c2-8 14-10 20-4s0 14-8 14-14-2-12-10z'/></g></svg>`,
 }

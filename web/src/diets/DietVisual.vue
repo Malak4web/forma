@@ -9,6 +9,7 @@ const t = computed(() => d.value.theme)
 /* macro donut */
 const R = 80, C = 2 * Math.PI * R
 const segs = computed(() => {
+  if (!d.value.macros) return []
   const { c, p, f } = d.value.macros
   const list = [
     { k: 'f', v: f, label: 'دهون', col: t.value.a },
@@ -18,7 +19,7 @@ const segs = computed(() => {
   let acc = 0
   return list.map((x) => { const s = { ...x, dash: (x.v / 100) * C, off: -acc }; acc += (x.v / 100) * C; return s })
 })
-const lead = computed(() => [...segs.value].sort((a, b) => b.v - a.v)[0])
+const lead = computed(() => [...segs.value].sort((a, b) => b.v - a.v)[0] || { v: 0, label: '' })
 
 /* fasting dial: 24h, eating window highlighted */
 const win = computed(() => d.value.window || { from: 12, to: 20 })
@@ -98,6 +99,17 @@ const days = ['س', 'ح', 'ن', 'ث', 'ر', 'خ', 'ج']
       <path d="M100 140 C40 100 10 70 30 40 C48 14 84 20 100 46 C116 20 152 14 170 40 C190 70 160 100 100 140Z" fill="none" :stroke="t.a" stroke-width="5" />
       <path d="M20 84 H70 L80 62 L92 108 L104 70 L112 84 H180" fill="none" :stroke="t.b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" class="beat" />
       <text x="100" y="156" text-anchor="middle" class="sm" :fill="t.ink">صوديوم أقل من {{ d.sodium }} مجم</text>
+    </svg>
+
+    <!-- STAR (tayyibat): 8-point star, allowed vs forbidden -->
+    <svg v-else-if="d.visual === 'star'" viewBox="0 0 200 200" class="svg">
+      <g :stroke="t.a" fill="none" stroke-width="3">
+        <rect x="45" y="45" width="110" height="110" rx="6" />
+        <rect x="45" y="45" width="110" height="110" rx="6" transform="rotate(45 100 100)" />
+      </g>
+      <circle cx="100" cy="100" r="44" :fill="t.surface" :stroke="t.b" stroke-width="2" />
+      <text x="100" y="94" text-anchor="middle" class="lbl" :fill="t.a">طيّب</text>
+      <text x="100" y="118" text-anchor="middle" class="sm" :fill="t.ink">مسموح وممنوع</text>
     </svg>
 
     <!-- CYCLE -->

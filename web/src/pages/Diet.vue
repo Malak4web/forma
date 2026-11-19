@@ -90,7 +90,7 @@ const levelTxt = (n) => ['', 'سهل', 'متوسط', 'صعب', 'صعب جدًا'
     </header>
 
     <!-- ───── MACROS STRIP ───── -->
-    <section class="wrap strip">
+    <section v-if="d.macros" class="wrap strip">
       <div class="mac"><b class="num">{{ d.macros.c }}%</b><span>كارب</span><i :style="{ width: d.macros.c + '%' }" class="ic"></i></div>
       <div class="mac"><b class="num">{{ d.macros.p }}%</b><span>بروتين</span><i :style="{ width: d.macros.p + '%' }" class="ip"></i></div>
       <div class="mac"><b class="num">{{ d.macros.f }}%</b><span>دهون</span><i :style="{ width: d.macros.f + '%' }" class="if"></i></div>
@@ -145,18 +145,19 @@ const levelTxt = (n) => ['', 'سهل', 'متوسط', 'صعب', 'صعب جدًا'
           <header class="dc-h">
             <div>
               <b>اليوم <span class="num">{{ day }}</span></b>
-              <small v-if="plan.type" class="ty">{{ CYCLE_LABEL[plan.type] }}</small>
+              <small v-if="plan.type" class="ty">{{ (d.cycleLabels || CYCLE_LABEL)[plan.type] }}</small>
             </div>
-            <span class="kc">≈ <span class="num">{{ plan.kcal }}</span> سعرة</span>
+            <span v-if="!d.noKcal" class="kc">≈ <span class="num">{{ plan.kcal }}</span> سعرة</span>
           </header>
           <ul class="meals">
             <li v-for="(meal, i) in plan.meals" :key="i">
               <span class="ic">{{ meal.icon }}</span>
               <span class="x"><small>{{ meal.label }}</small><b>{{ meal.n }}</b></span>
-              <span class="k"><span class="num">{{ meal.k }}</span></span>
+              <span v-if="meal.k" class="k"><span class="num">{{ meal.k }}</span></span>
             </li>
           </ul>
-          <p v-if="scale !== null && Math.abs(scale) >= 5" class="scale">
+          <p v-if="d.noKcal" class="scale">الكميات على قد جوعك — «كُل لما تجوع وبطّل قبل الشبع».</p>
+          <p v-else-if="scale !== null && Math.abs(scale) >= 5" class="scale">
             احتياجك حسب الحاسبة <b class="num">{{ target }}</b> سعرة — {{ scale > 0 ? 'زوّد' : 'قلّل' }} الكميات حوالي <b class="num">{{ Math.abs(scale) }}%</b>.
           </p>
           <p v-else-if="scale === null" class="scale">الكميات تقريبية. <RouterLink to="/calculator">احسب سعراتك</RouterLink> عشان نظبطها على قدّك.</p>
@@ -182,6 +183,7 @@ const levelTxt = (n) => ['', 'سهل', 'متوسط', 'صعب', 'صعب جدًا'
         <h3>💡 نصايح</h3>
         <ul class="tips"><li v-for="t in d.tips" :key="t">{{ t }}</li></ul>
         <div class="warn"><b>⚠️ قبل ما تبدأ</b><p>{{ d.warning }}</p></div>
+        <a v-if="d.source" :href="d.source.url" target="_blank" rel="noopener" class="src">المصدر: {{ d.source.label }} ↗</a>
       </div>
     </section>
 
@@ -308,6 +310,7 @@ const levelTxt = (n) => ['', 'سهل', 'متوسط', 'صعب', 'صعب جدًا'
 .tips { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .tips li { display: flex; gap: 8px; font-weight: 600; font-size: .92rem; }
 .tips li::before { content: '▸'; color: var(--a); }
+.src { font-size: .8rem; font-weight: 800; color: var(--a); }
 .warn { padding: 12px 14px; border-radius: 14px; background: rgba(255,90,90,.1); border: 1px solid rgba(255,90,90,.35); display: grid; gap: 4px; font-size: .88rem; }
 
 /* others */
