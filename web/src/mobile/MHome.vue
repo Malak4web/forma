@@ -5,7 +5,9 @@ import MRail from './MRail.vue'
 import TransformationsMarquee from '../components/TransformationsMarquee.vue'
 import { videos, programs, programDay, plans } from '../data.js'
 import { store, nextWorkout, doneDays, hasAccess, greeting } from '../stores/app.js'
-import { DIETS } from '../diets/data.js'
+import { DIETS, dietBySlug } from '../diets/data.js'
+import { TRAININGS } from '../training/data.js'
+import { motifBg } from '../diets/motifs.js'
 
 const next = computed(() => nextWorkout())
 const nextDay = computed(() => (next.value ? programDay(next.value.program, next.value.day) : null))
@@ -30,6 +32,9 @@ const diff = computed(() => (store.weights.length > 1 ? +(store.weights.at(-1).k
 const totalDone = computed(() => Object.values(store.user ? store.completed : store.guestCompleted).reduce((n, d) => n + d.length, 0))
 
 const library = computed(() => videos.filter((v) => v.home).slice(0, 8))
+const tay = dietBySlug('tayyibat')
+const tayBg = motifBg('arabesque', tay.theme.a, 0.2)
+const dietsSorted = [tay, ...DIETS.filter((x) => x.slug !== 'tayyibat')]
 const pro = computed(() => plans.find((x) => x.highlight) || plans.at(-1))
 const goals = [
   { cat: 'belly', label: 'الكرش', img: 'climbers' },
@@ -162,12 +167,36 @@ const goals = [
       </RouterLink>
     </MRail>
 
-    <MRail title="أنظمة الأكل" :total="DIETS.length" all="/diets" all-label="كل الأنظمة">
-      <RouterLink v-for="dt in DIETS" :key="dt.slug" :to="`/diets/${dt.slug}`" class="dcard" :style="{ '--da': dt.theme.a, '--dbg': dt.theme.bg, '--dink': dt.theme.ink }">
+    <!-- featured: Al-Tayyibat -->
+    <div class="m-pad blk">
+      <RouterLink to="/diets/tayyibat" class="tay" :style="{ backgroundImage: tayBg }">
+        <span class="tay-star" aria-hidden="true">
+          <svg viewBox="0 0 100 100"><g fill="none" stroke="#d4af37" stroke-width="3"><rect x="22" y="22" width="56" height="56" rx="4" /><rect x="22" y="22" width="56" height="56" rx="4" transform="rotate(45 50 50)" /></g><text x="50" y="57" text-anchor="middle">🌿</text></svg>
+        </span>
+        <span class="tay-b">
+          <span class="tay-k">نظام مميّز · قايمة مسموح وممنوع</span>
+          <b>نظام الطيبات</b>
+          <small>كُل لما تجوع، وطيّبات واضحة — وخطة 30 يوم جاهزة.</small>
+        </span>
+        <span class="tay-go">‹</span>
+      </RouterLink>
+    </div>
+
+    <MRail title="أنظمة الأكل" :total="dietsSorted.length" all="/diets" all-label="كل الأنظمة">
+      <RouterLink v-for="dt in dietsSorted" :key="dt.slug" :to="`/diets/${dt.slug}`" class="dcard" :style="{ '--da': dt.theme.a, '--dbg': dt.theme.bg, '--dink': dt.theme.ink }">
         <span class="de">{{ dt.emoji }}</span>
         <b>{{ dt.name }}</b>
         <small class="en">{{ dt.en }}</small>
         <span class="d30"><span class="num">30</span> يوم</span>
+      </RouterLink>
+    </MRail>
+
+    <MRail title="أنظمة التدريب" :total="TRAININGS.length" all="/training" all-label="كل الأنظمة">
+      <RouterLink v-for="tr in TRAININGS" :key="tr.slug" :to="`/training/${tr.slug}`" class="dcard tcard" :style="{ '--da': tr.theme.a, '--dbg': tr.theme.mode === 'light' ? '#13231d' : tr.theme.bg, '--dink': tr.theme.mode === 'light' ? '#eafff6' : tr.theme.ink }">
+        <span class="de">{{ tr.emoji }}</span>
+        <b>{{ tr.name }}</b>
+        <small class="en">{{ tr.en }}</small>
+        <span class="d30"><span class="num">{{ tr.daysPerWeek }}</span> أيام</span>
       </RouterLink>
     </MRail>
 
@@ -253,6 +282,20 @@ const goals = [
 .dcard b { font-family: var(--f-head); font-weight: 400; font-size: 1.25rem; line-height: 1.1; }
 .dcard .en { color: var(--da); font-size: .78rem; letter-spacing: .12em; justify-self: start; align-self: flex-start; }
 .d30 { position: absolute; top: 12px; inset-inline-end: 10px; font-size: .62rem; font-weight: 900; background: var(--da); color: #0a0a0a; padding: 2px 7px; border-radius: 99px; }
+
+/* featured tayyibat */
+.tay { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 22px; background-color: #0e1712; color: #f3ead2; border: 1px solid rgba(212,175,55,.45); box-shadow: inset 0 0 0 1px rgba(212,175,55,.08), 0 14px 30px -20px #d4af37; }
+.tay-star { flex: none; width: 70px; height: 70px; border-radius: 18px; background: #16241c; display: grid; place-items: center; }
+.tay-star svg { width: 62px; height: 62px; animation: tayspin 24s linear infinite; }
+.tay-star text { font-size: 22px; }
+@keyframes tayspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .tay-star svg { animation: none; } }
+.tay-b { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.tay-k { font-size: .66rem; font-weight: 900; color: #7fbf95; }
+.tay-b b { font-family: var(--f-head); font-weight: 400; font-size: 1.5rem; line-height: 1.05; color: #d4af37; }
+.tay-b small { font-size: .76rem; opacity: .85; line-height: 1.5; }
+.tay-go { font-family: var(--f-head); font-size: 1.6rem; color: #d4af37; }
+.tcard .d30 { font-size: .6rem; }
 
 /* programs rail */
 .prog { width: 250px; overflow: hidden; }

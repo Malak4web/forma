@@ -22,6 +22,8 @@ const routes = [
   { path: '/account', component: pick('Account', 'MAccount'), meta: { m: true, title: 'حسابي', auth: true, tab: true } },
   { path: '/diets', component: p('Diets'), meta: { m: true, title: 'أنظمة الأكل' } },
   { path: '/diets/:slug', component: p('Diet'), meta: { m: true, title: 'نظام أكل' } },
+  { path: '/training', component: p('Trainings'), meta: { m: true, title: 'أنظمة التدريب' } },
+  { path: '/training/:slug', component: p('Training'), meta: { m: true, title: 'نظام تدريب' } },
   { path: '/workout/:program/:day', component: p('Workout'), meta: { m: true, title: 'تمرين اليوم', bare: true } },
   { path: '/admin/claim', component: p('AdminClaim'), meta: { title: 'تفعيل الأدمن', auth: true } },
   { path: '/admin', component: p('AdminDashboard'), meta: { title: 'لوحة التحكم (أدمن)', auth: true, admin: true } },
