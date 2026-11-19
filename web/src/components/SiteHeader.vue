@@ -66,7 +66,7 @@ function back() {
       <RouterLink to="/calculator"><span>🔥</span>احسب سعراتك وخد نظامك ببلاش</RouterLink>
       <RouterLink to="/pricing"><span>⭐</span>الباقات والأسعار</RouterLink>
       <RouterLink to="/programs"><span>📅</span>كل البرامج</RouterLink>
-      <RouterLink v-if="store.user?.is_admin" to="/admin/orders"><span>🛠️</span>لوحة الأدمن</RouterLink>
+      <RouterLink v-if="store.user?.is_admin" to="/admin"><span>🛠️</span>لوحة الأدمن</RouterLink>
       <template v-if="!store.user">
         <RouterLink to="/login"><span>👋</span>دخول</RouterLink>
         <RouterLink to="/register" class="btn btn-primary">اعمل حساب ببلاش</RouterLink>

@@ -41,7 +41,7 @@ class ProgramDays
             'rounds' => $rounds,
             'items' => collect($slugs)
                 ->filter(fn ($s) => $exercises->has($s))
-                ->map(fn ($s) => $exercises[$s]->toPublic() + ['work' => $work, 'rest' => $rest])
+                ->map(fn ($s) => array_merge($exercises[$s]->toPublic(), ['work' => $work, 'rest' => $rest]))
                 ->values(),
         ];
     }

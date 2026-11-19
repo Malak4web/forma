@@ -48,6 +48,16 @@ class User extends Authenticatable
         return $this->hasMany(WeightLog::class);
     }
 
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
+    }
+
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
+    }
+
     /** Subscriptions that are active right now (lifetime or not yet ended). */
     public function activeSubscriptions(): HasMany
     {

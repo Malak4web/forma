@@ -13,6 +13,16 @@ const related = computed(() => videos.filter((x) => x.cat === v.value?.cat && x.
 const inPrograms = computed(() => programs.filter((p) => p.weeks.some((w) => w.pool.includes(v.value?.id))))
 const catLabel = computed(() => categories.find((c) => c.id === v.value?.cat)?.label)
 const playing = ref(false)
+
+const isDirectVideo = (url) => /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url || '') || (url || '').startsWith('/api/media/videos/')
+function embedUrl(url) {
+  if (!url) return ''
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&rel=0`
+  const vm = url.match(/vimeo\.com\/(\d+)/)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?autoplay=1&muted=1`
+  return url
+}
 </script>
 
 <template>
@@ -22,9 +32,15 @@ const playing = ref(false)
       <nav class="crumbs"><RouterLink to="/library">المكتبة</RouterLink><span>/</span><RouterLink :to="{ path: '/library', query: { cat: v.cat } }">{{ catLabel }}</RouterLink></nav>
       <div class="grid">
         <div class="player">
-          <img :src="v.img" :alt="v.title" />
-          <button v-if="!playing" class="play" aria-label="شغّل الفيديو" @click="playing = true">▶</button>
-          <span v-else class="ph">مكان مشغّل الفيديو — بيشتغل من غير صوت أوتوماتيك</span>
+          <template v-if="playing && v.video">
+            <video v-if="isDirectVideo(v.video)" :src="v.video" :poster="v.img" autoplay muted controls playsinline class="vid"></video>
+            <iframe v-else :src="embedUrl(v.video)" class="vid" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          </template>
+          <template v-else>
+            <img :src="v.img" :alt="v.title" />
+            <button v-if="!playing" class="play" aria-label="شغّل الفيديو" @click="playing = true">▶</button>
+            <span v-else class="ph">الفيديو لسه ماترفعش — هيشتغل هنا أول ما يتضاف من لوحة الأدمن</span>
+          </template>
         </div>
         <div class="info">
           <span class="kicker">{{ catLabel }}</span>
@@ -34,15 +50,20 @@ const playing = ref(false)
             <span><b class="num">{{ fmt(v.sec) }}</b> دقيقة</span>
             <span v-if="v.level">{{ v.level }}</span>
             <span v-if="v.muscles">{{ v.muscles }}</span>
+            <span v-if="v.equipment">{{ v.equipment }}</span>
+            <span v-if="v.reps">{{ v.reps }}</span>
+            <span v-if="v.calories_est">~<b class="num">{{ v.calories_est }}</b> سعرة</span>
           </div>
 
           <div v-if="v.home" class="set">
-            <div><b class="num">3</b><span>جولات</span></div>
-            <div><b class="num">40</b><span>ثانية شغل</span></div>
-            <div><b class="num">20</b><span>ثانية راحة</span></div>
+            <div><b class="num">{{ v.sets || 3 }}</b><span>جولات</span></div>
+            <div><b class="num">{{ v.work || 40 }}</b><span>ثانية شغل</span></div>
+            <div><b class="num">{{ v.rest ?? 20 }}</b><span>ثانية راحة</span></div>
           </div>
 
-          <div v-if="v.tips" class="tips">
+          <p v-if="v.description" class="desc">{{ v.description }}</p>
+
+          <div v-if="v.tips && v.tips.length" class="tips">
             <h2>خلي بالك من</h2>
             <ul><li v-for="t in v.tips" :key="t">{{ t }}</li></ul>
           </div>
@@ -68,12 +89,13 @@ const playing = ref(false)
 .grid { display: grid; gap: 24px; margin-top: 14px; }
 @media (min-width: 900px) { .grid { grid-template-columns: 380px 1fr; gap: 48px; align-items: start; } .player { position: sticky; top: calc(var(--header) + 16px); } }
 .player { position: relative; aspect-ratio: 9/16; max-height: 78svh; width: 100%; margin-inline: auto; border-radius: 18px; overflow: hidden; border: 2px solid #222; background: #000; }
-.player img { width: 100%; height: 100%; object-fit: cover; }
+.player img, .vid { width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
 .play { position: absolute; inset: 0; margin: auto; width: 80px; height: 80px; border-radius: 50%; background: var(--orange); color: #0a0a0a; font-size: 1.8rem; padding-inline-start: 5px; box-shadow: 0 0 0 10px rgba(255,106,0,.25); }
 .ph { position: absolute; inset: auto 12px 12px; background: rgba(0,0,0,.75); border-radius: 10px; padding: 8px; text-align: center; font-size: .85rem; font-weight: 700; }
 .info { display: grid; gap: 16px; align-content: start; }
 .info h1 { font-size: clamp(3rem, 12vw, 4.6rem); line-height: .95; justify-self: start; }
 .hook { font-family: var(--f-head); font-size: 1.5rem; }
+.desc { color: #ddd; line-height: 1.7; white-space: pre-line; }
 .meta { display: flex; flex-wrap: wrap; gap: 8px; }
 .meta span { background: #1a1a1a; border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 700; }
 .meta b { color: var(--amber); font-size: 1.1rem; }

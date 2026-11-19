@@ -17,7 +17,7 @@ class ContentController extends Controller
     public function index(PaymentManager $payments): JsonResponse
     {
         return response()->json([
-            'exercises' => Exercise::orderBy('sort')->get()->map->toPublic(),
+            'exercises' => Exercise::where('is_active', true)->orderBy('sort')->orderBy('id')->get()->map->toPublic(),
             'programs' => Program::where('is_active', true)->with(['weeks', 'plans' => fn ($q) => $q->withCount('programs')])->orderBy('sort')->get()->map->toPublic(),
             'plans' => Plan::where('is_active', true)->with('programs')->orderBy('sort')->get()->map->toPublic(),
             'transformations' => Transformation::where('is_active', true)->orderBy('sort')->orderBy('id')->get()->map->toPublic(),

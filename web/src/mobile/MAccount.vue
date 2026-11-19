@@ -39,7 +39,7 @@ async function out() { await logout().catch(() => {}); toast('اتسجّل خر�
 <template>
   <div class="m-screen with-tabs">
     <MAppBar title="حسابي" :back="false">
-      <RouterLink v-if="store.user.is_admin" to="/admin/orders" class="mib" aria-label="لوحة الأدمن">
+      <RouterLink v-if="store.user.is_admin" to="/admin" class="mib" aria-label="لوحة الأدمن">
         <svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z" /></svg>
       </RouterLink>
     </MAppBar>

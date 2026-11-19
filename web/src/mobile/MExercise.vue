@@ -18,19 +18,31 @@ const tabs = computed(() => [
   ...(inPrograms.value.length ? [{ id: 'progs', label: 'في البرامج' }] : []),
 ])
 
-/* quick single-exercise timer: 3 rounds × 40s work / 20s rest */
-const ROUNDS = 3, WORK = 40, REST = 20
+/* quick single-exercise timer */
+const ROUNDS = computed(() => v.value?.sets || 3)
+const WORK = computed(() => v.value?.work || 40)
+const REST = computed(() => v.value?.rest ?? 20)
+const playing = ref(false)
+const isDirectVideo = (url) => /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url || '') || (url || '').startsWith('/api/media/videos/')
+function embedUrl(url) {
+  if (!url) return ''
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&rel=0`
+  const vm = url.match(/vimeo\.com\/(\d+)/)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?autoplay=1&muted=1`
+  return url
+}
 const timer = ref(null) // { round, phase: 'work'|'rest'|'done', left }
 let t, deadline, pausedLeft = 0
 const paused = ref(false)
-function startTimer() { timer.value = { round: 1, phase: 'work', left: WORK }; deadline = Date.now() + WORK * 1000; paused.value = false; clearInterval(t); t = setInterval(tick, 200) }
+function startTimer() { timer.value = { round: 1, phase: 'work', left: WORK.value }; deadline = Date.now() + WORK.value * 1000; paused.value = false; clearInterval(t); t = setInterval(tick, 200) }
 function tick() {
   if (paused.value || !timer.value) return
   timer.value.left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
   if (timer.value.left > 0) return
   const s = timer.value
-  if (s.phase === 'work' && s.round === ROUNDS) { s.phase = 'done'; clearInterval(t); navigator.vibrate?.([120, 60, 120]); return }
-  if (s.phase === 'work') { s.phase = 'rest'; s.left = REST } else { s.phase = 'work'; s.round++; s.left = WORK }
+  if (s.phase === 'work' && s.round === ROUNDS.value) { s.phase = 'done'; clearInterval(t); navigator.vibrate?.([120, 60, 120]); return }
+  if (s.phase === 'work') { s.phase = 'rest'; s.left = REST.value } else { s.phase = 'work'; s.round++; s.left = WORK.value }
   deadline = Date.now() + s.left * 1000
   navigator.vibrate?.(80)
 }
@@ -40,20 +52,24 @@ function togglePause() {
 function stopTimer() { clearInterval(t); timer.value = null }
 onBeforeUnmount(() => clearInterval(t))
 const RR = 88, CC = 2 * Math.PI * RR
-const total = computed(() => (timer.value?.phase === 'rest' ? REST : WORK))
+const total = computed(() => (timer.value?.phase === 'rest' ? REST.value : WORK.value))
 </script>
 
 <template>
   <NotFound v-if="!v" />
   <div v-else class="ex">
     <div class="media">
-      <img :src="v.img" :alt="v.title" />
+      <template v-if="playing && v.video">
+        <video v-if="isDirectVideo(v.video)" :src="v.video" :poster="v.img" autoplay muted controls playsinline class="mvid"></video>
+        <iframe v-else :src="embedUrl(v.video)" class="mvid" allow="autoplay; fullscreen" allowfullscreen></iframe>
+      </template>
+      <img v-else :src="v.img" :alt="v.title" />
       <MAppBar transparent fallback="/library">
         <RouterLink :to="{ path: '/library', query: { cat: v.cat } }" class="mib glass" aria-label="تمارين شبهه">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="10" rx="2" /><rect x="13.5" y="3" width="7.5" height="10" rx="2" /><rect x="3" y="15.5" width="7.5" height="5.5" rx="2" /><rect x="13.5" y="15.5" width="7.5" height="5.5" rx="2" /></svg>
         </RouterLink>
       </MAppBar>
-      <button class="play" aria-label="شغّل الفيديو">▶</button>
+      <button v-if="!playing && v.video" class="play" aria-label="شغّل الفيديو" @click="playing = true">▶</button>
     </div>
 
     <div class="m-pad head">
@@ -65,9 +81,9 @@ const total = computed(() => (timer.value?.phase === 'rest' ? REST : WORK))
     <MSeg v-if="tabs.length > 1" v-model="tab" :options="tabs" class="seg" />
     <div class="m-pad pane">
       <div v-if="tab === 'how'" class="set">
-        <div><b class="num">3</b><span>جولات</span></div>
-        <div><b class="num">40</b><span>ثانية شغل</span></div>
-        <div><b class="num">20</b><span>ثانية راحة</span></div>
+        <div><b class="num">{{ ROUNDS }}</b><span>جولات</span></div>
+        <div><b class="num">{{ WORK }}</b><span>ثانية شغل</span></div>
+        <div><b class="num">{{ REST }}</b><span>ثانية راحة</span></div>
       </div>
       <ul v-else-if="tab === 'tips'" class="tips">
         <li v-for="tip in v.tips" :key="tip">{{ tip }}</li>
@@ -113,7 +129,7 @@ const total = computed(() => (timer.value?.phase === 'rest' ? REST : WORK))
 <style scoped>
 .ex { min-height: 100dvh; display: flex; flex-direction: column; padding-bottom: var(--m-cta); }
 .media { position: relative; height: 46dvh; min-height: 300px; flex: none; }
-.media > img { width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
+.media > img, .mvid { width: 100%; height: 100%; object-fit: cover; object-position: center 35%; border: 0; display: block; }
 .media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, #0a0a0a 2%, transparent 40%); pointer-events: none; }
 .play { position: absolute; z-index: 2; inset: 0; margin: auto; width: 72px; height: 72px; border-radius: 50%; background: var(--orange); color: #0a0a0a; font-size: 1.5rem; padding-inline-start: 4px; box-shadow: 0 0 0 10px rgba(255,106,0,.25); }
 .head { display: grid; gap: 2px; margin-top: -6px; position: relative; z-index: 1; }

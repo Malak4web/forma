@@ -131,7 +131,7 @@ async function out() { await logout().catch(() => {}); toast('اتسجّل خر�
       <RouterLink to="/pricing"><span class="ic">⭐</span>الباقات<i>‹</i></RouterLink>
       <RouterLink to="/calculator"><span class="ic">🔥</span>احسب سعراتك تاني<i>‹</i></RouterLink>
       <RouterLink to="/library"><span class="ic">🎬</span>مكتبة التمارين<i>‹</i></RouterLink>
-      <RouterLink v-if="store.user.is_admin" to="/admin/orders"><span class="ic">🛠️</span>لوحة الأدمن<i>‹</i></RouterLink>
+      <RouterLink v-if="store.user.is_admin" to="/admin"><span class="ic">🛠️</span>لوحة الأدمن<i>‹</i></RouterLink>
       <button @click="out"><span class="ic">🚪</span>تسجيل خروج</button>
     </nav>
     <p class="legal muted">المعلومات هنا للتوعية ومش بديل عن الدكتور. لو عندك وجع شديد أو مستمر، اكشف.</p>

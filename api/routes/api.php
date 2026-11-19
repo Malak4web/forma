@@ -5,11 +5,18 @@
 | session auth + CSRF (X-XSRF-TOKEN header), no token package.
 */
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ExerciseController as AdminExerciseController;
+use App\Http\Controllers\Admin\FollowUpController as AdminFollowUpController;
+use App\Http\Controllers\Admin\LeadController as AdminLeadController;
+use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\ProgramController as AdminProgramController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\TransformationController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminClaimController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MeController;
@@ -22,8 +29,8 @@ Route::get('csrf', [AuthController::class, 'csrf']);
 
 // public
 Route::get('content', [ContentController::class, 'index']);
-Route::get('media/transformations/{file}', function (string $file) {
-    $path = 'transformations/'.basename($file);
+Route::get('media/{folder}/{file}', function (string $folder, string $file) {
+    $path = $folder.'/'.basename($file);
     $disk = Storage::disk('public');
 
     abort_unless($disk->exists($path), 404);
@@ -31,7 +38,8 @@ Route::get('media/transformations/{file}', function (string $file) {
     return response()->file($disk->path($path), [
         'Cache-Control' => 'public, max-age=31536000, immutable',
     ]);
-})->where('file', '[A-Za-z0-9._-]+');
+})->whereIn('folder', ['transformations', 'exercises', 'videos'])->where('file', '[A-Za-z0-9._-]+');
+
 Route::get('programs/{program}/days/{day}', [ContentController::class, 'day'])->whereNumber('day');
 Route::post('leads', [LeadController::class, 'store'])->middleware('throttle:10,1');
 Route::get('me', [MeController::class, 'show']);
@@ -53,15 +61,58 @@ Route::middleware('auth')->group(function () {
     Route::post('orders', [OrderController::class, 'store'])->middleware('throttle:6,1');
 
     Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('dashboard', [AdminDashboardController::class, 'show']);
+
+        // Exercises & Videos
+        Route::get('exercises', [AdminExerciseController::class, 'index']);
+        Route::post('exercises', [AdminExerciseController::class, 'store']);
+        Route::put('exercises/{exercise}', [AdminExerciseController::class, 'update']);
+        Route::delete('exercises/{exercise}', [AdminExerciseController::class, 'destroy']);
+
+        // Programs & Weeks
+        Route::get('programs', [AdminProgramController::class, 'index']);
+        Route::post('programs', [AdminProgramController::class, 'store']);
+        Route::put('programs/{program:id}', [AdminProgramController::class, 'update']);
+        Route::delete('programs/{program:id}', [AdminProgramController::class, 'destroy']);
+
+        // Members
+        Route::get('members', [AdminMemberController::class, 'index']);
+        Route::post('members', [AdminMemberController::class, 'store']);
+        Route::get('members/{user}', [AdminMemberController::class, 'show']);
+        Route::put('members/{user}', [AdminMemberController::class, 'update']);
+        Route::delete('members/{user}', [AdminMemberController::class, 'destroy']);
+        Route::post('members/{user}/weights', [AdminMemberController::class, 'storeWeight']);
+        Route::delete('members/{user}/weights/{weight}', [AdminMemberController::class, 'destroyWeight']);
+        Route::post('members/{user}/completions', [AdminMemberController::class, 'toggleCompletion']);
+
+        // Subscriptions
+        Route::get('subscriptions', [AdminSubscriptionController::class, 'index']);
+        Route::post('subscriptions', [AdminSubscriptionController::class, 'store']);
+        Route::put('subscriptions/{subscription}', [AdminSubscriptionController::class, 'update']);
+        Route::delete('subscriptions/{subscription}', [AdminSubscriptionController::class, 'destroy']);
+
+        // Follow-ups & Leads
+        Route::get('followups', [AdminFollowUpController::class, 'index']);
+        Route::post('followups', [AdminFollowUpController::class, 'store']);
+        Route::put('followups/{followUp}', [AdminFollowUpController::class, 'update']);
+        Route::delete('followups/{followUp}', [AdminFollowUpController::class, 'destroy']);
+
+        Route::get('leads', [AdminLeadController::class, 'index']);
+        Route::put('leads/{lead}', [AdminLeadController::class, 'update']);
+        Route::delete('leads/{lead}', [AdminLeadController::class, 'destroy']);
+
+        // Orders
         Route::get('orders', [AdminOrderController::class, 'index']);
         Route::get('orders/{order}/receipt', [AdminOrderController::class, 'receipt']);
         Route::post('orders/{order}/approve', [AdminOrderController::class, 'approve']);
         Route::post('orders/{order}/reject', [AdminOrderController::class, 'reject']);
 
+        // Settings & Plans
         Route::get('settings', [SettingsController::class, 'show']);
         Route::put('plans/{plan}', [SettingsController::class, 'updatePlan']);
         Route::put('payment-methods/{method}', [SettingsController::class, 'updatePayment']);
 
+        // Transformations
         Route::get('transformations', [TransformationController::class, 'index']);
         Route::post('transformations', [TransformationController::class, 'store']);
         Route::put('transformations/{transformation}', [TransformationController::class, 'update']);
