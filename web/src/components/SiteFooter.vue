@@ -1,5 +1,6 @@
 <script setup>
 import Logo from './Logo.vue'
+import SocialLinks from './SocialLinks.vue'
 </script>
 
 <template>
@@ -13,16 +14,12 @@ import Logo from './Logo.vue'
         <b>الموقع</b>
         <RouterLink to="/library">المكتبة</RouterLink>
         <RouterLink to="/programs">البرامج</RouterLink>
+        <RouterLink to="/training">أنظمة التدريب</RouterLink>
+        <RouterLink to="/diets">أنظمة الأكل</RouterLink>
         <RouterLink to="/calculator">احسب سعراتك</RouterLink>
         <RouterLink to="/pricing">الباقات</RouterLink>
       </nav>
-      <nav class="col" aria-label="تابعنا">
-        <b>تابعنا</b>
-        <a href="https://www.facebook.com/" target="_blank" rel="noopener">فيسبوك · فورمه</a>
-        <a href="https://www.instagram.com/form_aar" target="_blank" rel="noopener">إنستجرام · <span class="en">@form_aar</span></a>
-        <a href="https://www.tiktok.com/" target="_blank" rel="noopener">تيك توك</a>
-        <a href="https://www.youtube.com/channel/UC02kStlIDZWBXtxZZ5Y4KJw" target="_blank" rel="noopener">يوتيوب</a>
-      </nav>
+      <SocialLinks title="تابعنا" class="col-s" />
     </div>
     <div class="wrap legal">
       <small>المعلومات هنا للتوعية ومش بديل عن الدكتور. لو عندك وجع شديد أو مستمر، اكشف.</small>
@@ -41,5 +38,5 @@ import Logo from './Logo.vue'
 .col a { color: var(--muted); }
 .col a:hover { color: var(--orange); }
 .legal { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; border-top: 1px solid #1a1a1a; padding-top: 18px; color: var(--muted); }
-@media (min-width: 760px) { .foot-in { grid-template-columns: 2fr 1fr 1fr; } }
+@media (min-width: 760px) { .foot-in { grid-template-columns: 1.6fr 1fr 1.4fr; } }
 </style>

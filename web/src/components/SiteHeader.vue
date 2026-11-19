@@ -1,4 +1,5 @@
 <script setup>
+import SocialLinks from './SocialLinks.vue'
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Logo from './Logo.vue'
@@ -71,6 +72,7 @@ function back() {
       <RouterLink to="/pricing"><span>⭐</span>الباقات والأسعار</RouterLink>
       <RouterLink to="/programs"><span>📅</span>كل البرامج</RouterLink>
       <RouterLink v-if="store.user?.is_admin" to="/admin"><span>🛠️</span>لوحة الأدمن</RouterLink>
+      <SocialLinks title="تابعنا" class="sheet-soc" />
       <template v-if="!store.user">
         <RouterLink to="/login"><span>👋</span>دخول</RouterLink>
         <RouterLink to="/register" class="btn btn-primary">اعمل حساب ببلاش</RouterLink>
@@ -80,6 +82,7 @@ function back() {
 </template>
 
 <style scoped>
+.sheet-soc { padding: 8px 0 4px; }
 .hdr { position: fixed; top: 0; inset-inline: 0; z-index: 50; padding-top: env(safe-area-inset-top); transition: background-color .2s, border-color .2s; border-bottom: 1px solid transparent; }
 .hdr.solid { background: rgba(10,10,10,.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-color: #1c1c1c; }
 .hdr-space { height: calc(var(--header) + env(safe-area-inset-top)); }

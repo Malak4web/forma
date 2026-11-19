@@ -1,4 +1,5 @@
 <script setup>
+import SocialLinks from '../components/SocialLinks.vue'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import MAppBar from './MAppBar.vue'
@@ -111,11 +112,13 @@ async function out() { await logout().catch(() => {}); toast('اتسجّل خر�
         <RouterLink v-if="!sub" to="/pricing"><span>⭐</span><b>الباقات</b><i>‹</i></RouterLink>
         <button @click="out"><span>🚪</span><b class="bad">تسجيل خروج</b></button>
       </nav>
+      <SocialLinks title="تابعنا" class="acc-soc" />
     </div>
   </div>
 </template>
 
 <style scoped>
+.acc-soc { margin-top: 16px; }
 .prof { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
 .ava { width: 62px; height: 62px; flex: none; border-radius: 20px; transform: rotate(-6deg); background: var(--orange); color: #0a0a0a; display: grid; place-items: center; font-family: var(--f-head); font-size: 2rem; box-shadow: 4px 4px 0 #fff; }
 .who { flex: 1; min-width: 0; display: grid; }

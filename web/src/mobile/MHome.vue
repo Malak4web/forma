@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import MAppBar from './MAppBar.vue'
 import MRail from './MRail.vue'
 import TransformationsMarquee from '../components/TransformationsMarquee.vue'
+import SocialLinks from '../components/SocialLinks.vue'
 import { videos, programs, programDay, plans } from '../data.js'
 import { store, nextWorkout, doneDays, hasAccess, greeting } from '../stores/app.js'
 import { DIETS, dietBySlug } from '../diets/data.js'
@@ -212,6 +213,9 @@ const goals = [
         </div>
       </RouterLink>
     </MRail>
+    <section class="m-pad blk">
+      <SocialLinks title="تابع الكوتش المقنّع — ريلز جديدة كل يوم" />
+    </section>
     <div style="height: 18px"></div>
   </div>
 </template>
