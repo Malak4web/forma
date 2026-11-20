@@ -72,6 +72,7 @@ class LeadController extends Controller
             'phone' => $l->phone,
             'user_id' => $l->user_id,
             'goal' => $l->goal,
+            'diet' => $l->diet,
             'sex' => $l->sex,
             'age' => $l->age,
             'weight' => $l->weight,

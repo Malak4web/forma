@@ -11,12 +11,16 @@ export const activities = [
   { v: 1.725, label: 'بتتمرن كل يوم' },
 ]
 
-export function calcCalories({ sex, age, weight, height, act, goal }) {
+export function calcCalories({ sex, age, weight, height, act, goal }, split = null) {
   if (!age || !weight || !height) return null
   const bmr = 10 * weight + 6.25 * height - 5 * age + (sex === 'm' ? 5 : -161)
   const floor = sex === 'm' ? 1500 : 1200
   const g = goals.find((x) => x.id === goal) || goals[1]
   const kcal = Math.round(Math.max(floor, bmr * act + g.d) / 50) * 50
+  if (split) {
+    // the chosen diet decides the macro split (percent of calories)
+    return { kcal, protein: Math.round((kcal * split.p) / 400), carbs: Math.round((kcal * split.c) / 400), fat: Math.round((kcal * split.f) / 900) }
+  }
   const protein = Math.round(weight * (goal === 'gain' ? 1.8 : 1.6))
   const fat = Math.round((kcal * 0.27) / 9)
   const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4))

@@ -16,6 +16,7 @@ class LeadController extends Controller
             'name' => ['required', 'string', 'min:2', 'max:60'],
             'phone' => ['required', AuthController::PHONE],
             'goal' => ['nullable', Rule::in(['loss', 'cut', 'gain'])],
+            'diet' => ['nullable', 'string', 'max:40', 'regex:/^[a-z0-9-]+$/'],
             'sex' => ['nullable', Rule::in(['m', 'f'])],
             'age' => ['nullable', 'integer', 'between:12,90'],
             'weight' => ['nullable', 'numeric', 'between:30,300'],

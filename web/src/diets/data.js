@@ -315,6 +315,10 @@ export const DIETS = [
 ]
 
 export const dietBySlug = (slug) => DIETS.find((d) => d.slug === slug)
+// default eating style for the free plan (the calculator's classic starter day)
+export const BALANCED = { slug: 'balanced', name: 'فورمة المتوازن', en: 'FORMA BALANCED', emoji: '🍽️', tagline: 'أكل مصري عادي بكميات مظبوطة — أسهل بداية.', theme: { a: '#ff6a00', b: '#ffb000', bg: '#141414', surface: '#1b1b1b', ink: '#fff', mode: 'dark' } }
+/** Macro split (percent) the calculator should use for a diet slug, or null for FORMA defaults. */
+export const dietSplit = (slug) => dietBySlug(slug)?.macros || null
 
 export const GOALS = [
   { id: 'all', label: 'الكل' },

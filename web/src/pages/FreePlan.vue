@@ -2,10 +2,13 @@
 import { computed } from 'vue'
 import { store } from '../stores/app.js'
 import { starterDay, goals } from '../nutrition.js'
+import { dietBySlug } from '../diets/data.js'
+import DietPlanView from '../components/DietPlanView.vue'
 
 const c = computed(() => store.calc)
 const meals = computed(() => (c.value?.kcal ? starterDay(c.value.kcal) : []))
 const goal = computed(() => goals.find((g) => g.id === c.value?.input?.goal)?.label)
+const diet = computed(() => dietBySlug(c.value?.input?.diet))
 const name = computed(() => store.calc?.leadName || store.user?.name || '')
 </script>
 
@@ -13,9 +16,10 @@ const name = computed(() => store.calc?.leadName || store.user?.name || '')
   <div>
     <header class="page-head">
       <div class="wrap">
-        <span class="kicker">نظامك المبدئي{{ goal ? ' · ' + goal : '' }}</span>
+        <span class="kicker">نظامك المبدئي{{ goal ? ' · ' + goal : '' }}{{ diet ? ' · ' + diet.name : '' }}</span>
         <h1>{{ name ? `يلا يا ${name}،` : 'يلا،' }}<br /><span class="hl">ده نظامك</span></h1>
-        <p>ده يوم نموذجي على سعراتك التقريبية. بدّل الأكلات بحاجات شبهها، المهم المجموع.</p>
+        <p v-if="diet">نظام {{ diet.name }} متفصّل على سعراتك: أسبوع كامل بالوجبات وكمية كل وجبة.</p>
+        <p v-else>ده يوم نموذجي على سعراتك التقريبية. بدّل الأكلات بحاجات شبهها، المهم المجموع.</p>
       </div>
     </header>
 
@@ -25,6 +29,8 @@ const name = computed(() => store.calc?.leadName || store.user?.name || '')
     </section>
 
     <template v-else>
+      <section v-if="diet" class="wrap tailored"><DietPlanView :calc="c" /></section>
+      <template v-else>
       <section class="wrap sum">
         <div class="big"><span class="num">{{ c.kcal }}</span><small>سعرة/يوم تقريبًا</small></div>
         <div class="mac"><b class="num">{{ c.protein }}</b><span>بروتين جم</span></div>
@@ -39,6 +45,8 @@ const name = computed(() => store.calc?.leadName || store.user?.name || '')
         </article>
       </section>
 
+      </template>
+      <p class="wrap change"><RouterLink to="/calculator">غيّر النظام أو بياناتك ‹</RouterLink></p>
       <section class="wrap tips">
         <p class="note">اشرب مية كتير، قلّل السكر والعصاير والمقليات. الأرقام تقريبية ومش بديل عن دكتور تغذية، ولو عندك سكر أو ضغط أو أي مشكلة صحية اكشف الأول.</p>
       </section>
@@ -81,6 +89,9 @@ const name = computed(() => store.calc?.leadName || store.user?.name || '')
 .meal li { display: flex; gap: 8px; color: rgba(255,255,255,.88); }
 .meal li::before { content: '•'; color: var(--orange); font-weight: 900; }
 .tips { padding-top: 18px; }
+.tailored { padding-top: 24px; }
+.change { padding-top: 12px; font-weight: 800; }
+.change a { color: var(--orange); }
 .up { padding-top: 40px; }
 .up-in { display: grid; gap: 18px; padding: 22px; border-radius: 20px; background: #111; border: 1px solid #222; align-items: center; }
 .up-in img { width: 140px; border-radius: 50%; border: 4px solid var(--orange); }

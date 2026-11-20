@@ -1,4 +1,5 @@
 <script setup>
+import { dietBySlug } from '../diets/data.js'
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AdminNav from '../components/AdminNav.vue'
@@ -184,6 +185,7 @@ const leadTabs = [
   { id: 'all', label: 'الكل' },
 ]
 const goalLabels = { loss: 'تخسيس', cut: 'تنشيف', gain: 'زيادة عضل' }
+const dietName = (s) => (s === 'balanced' ? 'فورمة المتوازن' : dietBySlug(s)?.name || s)
 
 async function loadLeads() {
   leadLoading.value = true
@@ -371,6 +373,7 @@ onMounted(() => {
 
           <div class="mchips">
             <span v-if="l.goal">الهدف: <b>{{ goalLabels[l.goal] || l.goal }}</b></span>
+            <span v-if="l.diet">النظام: <b>{{ dietName(l.diet) }}</b></span>
             <span v-if="l.sex">{{ l.sex === 'f' ? 'أنثى' : 'ذكر' }}</span>
             <span v-if="l.age">السن: <b class="num">{{ l.age }}</b></span>
             <span v-if="l.weight">الوزن: <b class="num">{{ l.weight }}</b> كجم</span>

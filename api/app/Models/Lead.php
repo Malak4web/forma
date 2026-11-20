@@ -17,6 +17,7 @@ class Lead extends Model
         'phone',
         'user_id',
         'goal',
+        'diet',
         'sex',
         'age',
         'weight',

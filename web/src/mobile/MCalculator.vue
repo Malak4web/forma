@@ -3,15 +3,17 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MAppBar from './MAppBar.vue'
 import MSeg from './MSeg.vue'
+import DietPicker from '../components/DietPicker.vue'
+import { dietSplit } from '../diets/data.js'
 import { goals, activities, calcCalories } from '../nutrition.js'
 import { store, saveLead, toast } from '../stores/app.js'
 import { fieldErrors } from '../api.js'
 
 const router = useRouter()
 const step = ref(1)
-const STEPS = 4
-const f = reactive({ sex: 'm', age: 28, weight: 85, height: 175, act: 1.375, goal: 'loss', ...(store.calc?.input || {}) })
-const res = computed(() => calcCalories(f))
+const STEPS = 5
+const f = reactive({ sex: 'm', age: 28, weight: 85, height: 175, act: 1.375, goal: 'loss', diet: 'balanced', ...(store.calc?.input || {}) })
+const res = computed(() => calcCalories(f, dietSplit(f.diet)))
 watch([() => ({ ...f }), res], ([input, r]) => { store.calc = { ...store.calc, input, ...r, weight: input.weight } }, { deep: true })
 
 const lead = reactive({ name: store.user?.name || store.calc?.leadName || '', phone: store.user?.phone || store.calc?.leadPhone || '' })
@@ -31,7 +33,7 @@ let hold
 const press = (s, d) => { bump(s, d); hold = setTimeout(function rep() { bump(s, d); hold = setTimeout(rep, 70) }, 380) }
 const release = () => clearTimeout(hold)
 
-const titles = ['هدفك إيه؟', 'جسمك عامل إزاي دلوقتي؟', 'بتتحرك قد إيه في اليوم؟', 'نبعتلك النظام فين؟']
+const titles = ['هدفك إيه؟', 'جسمك عامل إزاي دلوقتي؟', 'بتتحرك قد إيه في اليوم؟', 'عايز تمشي على أنهي نظام؟', 'نبعتلك النظام فين؟']
 function next() {
   if (step.value < STEPS) return step.value++
   submit()
@@ -46,7 +48,7 @@ async function submit() {
     store.calc = { input: { ...f }, ...c, weight: f.weight }
     await saveLead({
       name: lead.name.trim(), phone: lead.phone.replace(/\s/g, ''),
-      goal: f.goal, sex: f.sex, age: f.age, weight: f.weight, height: f.height, activity: f.act, ...c,
+      goal: f.goal, diet: f.diet, sex: f.sex, age: f.age, weight: f.weight, height: f.height, activity: f.act, ...c,
     })
     toast('تمام! نظامك جاهز')
     router.push('/free-plan')
@@ -106,7 +108,13 @@ function back() { step.value > 1 ? step.value-- : router.back() }
           </button>
         </div>
 
-        <!-- 4. result preview + lead -->
+        <!-- 4. diet -->
+        <div v-else-if="step === 4" class="m-stack">
+          <p class="muted sub">هنفصّلك النظام ده على سعراتك بالظبط. مش متأكد؟ سيبها على «فورمة المتوازن».</p>
+          <DietPicker v-model="f.diet" :goal="f.goal" />
+        </div>
+
+        <!-- 5. result preview + lead -->
         <div v-else class="m-stack">
           <div class="peek">
             <small class="amber">احتياجك تقريبًا</small>
@@ -164,6 +172,7 @@ function back() { step.value > 1 ? step.value-- : router.back() }
 .peek div { display: flex; align-items: baseline; gap: 8px; }
 .big { font-size: 3.6rem; line-height: .9; }
 .fld { gap: 6px; }
+.sub { font-size: .85rem; margin-top: -8px; }
 .disc { text-align: center; font-size: .78rem; }
 .slide-enter-active, .slide-leave-active { transition: opacity .15s; }
 .slide-enter-from, .slide-leave-to { opacity: 0; }

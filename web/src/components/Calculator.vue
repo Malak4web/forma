@@ -2,11 +2,12 @@
 import { reactive, computed, watch } from 'vue'
 import { goals, activities, calcCalories } from '../nutrition.js'
 import { store } from '../stores/app.js'
+import { dietSplit } from '../diets/data.js'
 
 defineProps({ compact: Boolean })
-const f = reactive({ sex: 'm', age: 28, weight: 85, height: 175, act: 1.375, goal: 'loss', ...(store.calc?.input || {}) })
-const res = computed(() => calcCalories(f))
-watch([() => ({ ...f }), res], ([input, r]) => { store.calc = { input, ...r, weight: input.weight } }, { immediate: true, deep: true })
+const f = reactive({ sex: 'm', age: 28, weight: 85, height: 175, act: 1.375, goal: 'loss', diet: 'balanced', ...(store.calc?.input || {}) })
+const res = computed(() => calcCalories(f, dietSplit(f.diet)))
+watch([() => ({ ...f }), res], ([input, r]) => { store.calc = { ...store.calc, input, ...r, weight: input.weight } }, { immediate: true, deep: true })
 defineExpose({ f, res })
 </script>
 

@@ -4,10 +4,13 @@ import MAppBar from './MAppBar.vue'
 import MRail from './MRail.vue'
 import { store, nextWorkout } from '../stores/app.js'
 import { starterDay, goals } from '../nutrition.js'
+import { dietBySlug } from '../diets/data.js'
+import DietPlanView from '../components/DietPlanView.vue'
 
 const c = computed(() => store.calc)
 const meals = computed(() => (c.value?.kcal ? starterDay(c.value.kcal) : []))
 const goal = computed(() => goals.find((g) => g.id === c.value?.input?.goal)?.label)
+const diet = computed(() => dietBySlug(c.value?.input?.diet))
 const icons = { b: '☀️', l: '🍗', s: '🍎', d: '🌙' }
 const next = computed(() => nextWorkout())
 const share = () => navigator.share?.({ title: 'نظامي من فورمة', text: `احتياجي تقريبًا ${c.value?.kcal} سعرة في اليوم — فورمة`, url: location.origin + '/calculator' }).catch(() => {})
@@ -25,6 +28,8 @@ const share = () => navigator.share?.({ title: 'نظامي من فورمة', tex
     </div>
 
     <template v-else>
+      <div v-if="diet" class="m-pad"><DietPlanView :calc="c" mobile /></div>
+      <template v-else>
       <div class="m-pad">
         <div class="sum">
           <div class="m-halftone"></div>
@@ -44,6 +49,8 @@ const share = () => navigator.share?.({ title: 'نظامي من فورمة', tex
           <ul><li v-for="i in m.items" :key="i">{{ i }}</li></ul>
         </article>
       </MRail>
+      </template>
+      <RouterLink to="/calculator" class="m-pad change">غيّر النظام أو بياناتك ‹</RouterLink>
 
       <p class="m-pad muted note">قلّل السكر والعصاير والمقليات واشرب مية كتير. ولو عندك سكر أو ضغط أو أي مشكلة صحية، اكشف الأول.</p>
     </template>
@@ -70,5 +77,6 @@ const share = () => navigator.share?.({ title: 'نظامي من فورمة', tex
 .meal header b { font-size: 1.5rem; }
 .meal ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .meal li::before { content: '• '; color: var(--orange); font-weight: 900; }
+.change { display: block; margin-top: 12px; font-weight: 800; color: var(--orange); font-size: .88rem; }
 .note { font-size: .78rem; margin-top: 14px; }
 </style>

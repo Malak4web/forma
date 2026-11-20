@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Calculator from '../components/Calculator.vue'
+import DietPicker from '../components/DietPicker.vue'
 import { store, saveLead, toast } from '../stores/app.js'
 import { fieldErrors } from '../api.js'
 
@@ -19,7 +20,7 @@ function submit() {
   const c = store.calc
   saveLead({
     name: lead.name.trim(), phone: lead.phone.replace(/\s/g, ''),
-    goal: c.input.goal, sex: c.input.sex, age: c.input.age, weight: c.input.weight, height: c.input.height,
+    goal: c.input.goal, diet: c.input.diet || 'balanced', sex: c.input.sex, age: c.input.age, weight: c.input.weight, height: c.input.height,
     activity: c.input.act, kcal: c.kcal, protein: c.protein, carbs: c.carbs, fat: c.fat,
   })
     .then(() => { toast('تمام! نظامك جاهز'); router.push('/free-plan') })
@@ -34,12 +35,17 @@ function submit() {
       <div class="wrap">
         <nav class="crumbs"><RouterLink to="/">الرئيسية</RouterLink><span>/</span><span>الحاسبة</span></nav>
         <h1>احسب سعراتك<br /><span class="hl">وخد نظامك ببلاش</span></h1>
-        <p>6 أسئلة في دقيقة. الرقم بيتحسب قدامك، واكتب اسمك ورقمك عشان تاخد نظام الأكل المبدئي.</p>
+        <p>6 أسئلة في دقيقة، واختار النظام اللي عايز تمشي عليه (كيتو، صيام متقطع، الطيبات…). الرقم بيتحسب قدامك، واكتب اسمك ورقمك وخد نظامك مفصّل على قدّك.</p>
       </div>
     </header>
 
     <section class="wrap body">
-      <Calculator>
+      <Calculator v-slot="{ input }">
+        <div class="pick">
+          <b class="lead-t">اختار نظامك الغذائي</b>
+          <small class="muted">هنفصّلهولك على سعراتك — ولو مش متأكد سيبها على «فورمة المتوازن».</small>
+          <DietPicker v-model="input.diet" :goal="input.goal" compact />
+        </div>
         <form class="lead" novalidate @submit.prevent="submit">
           <b class="lead-t">ابعتلي النظام كامل</b>
           <label class="field">
@@ -62,6 +68,7 @@ function submit() {
 
 <style scoped>
 .body { padding-top: 28px; }
+.pick { display: grid; gap: 8px; position: relative; }
 .lead { display: grid; gap: 12px; margin-top: 6px; position: relative; }
 .lead-t { font-family: var(--f-head); font-weight: 400; font-size: 1.35rem; }
 </style>
