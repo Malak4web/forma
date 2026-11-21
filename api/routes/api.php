@@ -8,6 +8,7 @@
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ExerciseController as AdminExerciseController;
 use App\Http\Controllers\Admin\FollowUpController as AdminFollowUpController;
+use App\Http\Controllers\Admin\InboxController;
 use App\Http\Controllers\Admin\LeadController as AdminLeadController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -17,11 +18,13 @@ use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionContro
 use App\Http\Controllers\Admin\TransformationController;
 use App\Http\Controllers\AdminClaimController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CoachController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,6 +56,11 @@ Route::middleware('auth')->group(function () {
     Route::post('admin/claim', AdminClaimController::class)->middleware('throttle:5,1');
 
     Route::post('weights', [MeController::class, 'storeWeight']);
+    Route::put('me/nutrition', [TrackingController::class, 'nutrition']);
+    Route::put('logs/{date}', [TrackingController::class, 'log'])->middleware('throttle:120,1');
+    Route::get('coach', [CoachController::class, 'show']);
+    Route::post('coach/messages', [CoachController::class, 'send'])->middleware('throttle:20,1');
+    Route::post('coach/checkins', [CoachController::class, 'checkin'])->middleware('throttle:6,1');
     Route::post('progress/import', [ProgressController::class, 'import']);
     Route::post('progress/{program}/{day}', [ProgressController::class, 'complete'])->whereNumber('day');
 
@@ -100,6 +108,13 @@ Route::middleware('auth')->group(function () {
         Route::get('leads', [AdminLeadController::class, 'index']);
         Route::put('leads/{lead}', [AdminLeadController::class, 'update']);
         Route::delete('leads/{lead}', [AdminLeadController::class, 'destroy']);
+
+        // Coach inbox
+        Route::get('inbox', [InboxController::class, 'index']);
+        Route::get('inbox/{user}', [InboxController::class, 'show']);
+        Route::post('inbox/{user}', [InboxController::class, 'reply']);
+        Route::put('inbox/{user}/checkins/{followUp}', [InboxController::class, 'review']);
+        Route::put('coach-settings', [SettingsController::class, 'updateCoach']);
 
         // Orders
         Route::get('orders', [AdminOrderController::class, 'index']);

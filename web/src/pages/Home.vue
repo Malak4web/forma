@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import ReelCard from '../components/ReelCard.vue'
 import Faq from '../components/Faq.vue'
-import TodayCard from '../components/TodayCard.vue'
+import MemberToday from '../components/MemberToday.vue'
 import TransformationsMarquee from '../components/TransformationsMarquee.vue'
 import { videos, categories, programs, steps } from '../data.js'
 import { store, doneDays } from '../stores/app.js'
@@ -16,7 +16,7 @@ const done30 = computed(() => doneDays('30'))
 <template>
   <div class="home">
     <!-- signed-in: app-style "today" dashboard instead of the marketing hero -->
-    <div v-if="store.user" class="wrap"><TodayCard /></div>
+    <div v-if="store.user" class="wrap"><MemberToday /></div>
 
     <!-- HERO -->
     <section v-else class="hero">
@@ -62,7 +62,7 @@ const done30 = computed(() => doneDays('30'))
     </section>
 
     <!-- 30 DAY -->
-    <section class="ch30">
+    <section v-if="!store.user" class="ch30">
       <div class="wrap ch30-in">
         <div class="big30 num" aria-hidden="true">30</div>
         <div class="ch30-copy">
@@ -100,7 +100,7 @@ const done30 = computed(() => doneDays('30'))
     </section>
 
     <!-- HOW -->
-    <section class="sec wrap">
+    <section v-if="!store.user" class="sec wrap">
       <div class="sec-head"><h2>بيشتغل <span class="hl">إزاي؟</span></h2></div>
       <ol class="steps">
         <li v-for="s in steps" :key="s.n" class="step">
@@ -112,7 +112,7 @@ const done30 = computed(() => doneDays('30'))
     </section>
 
     <!-- PLAN CTA -->
-    <section class="plan">
+    <section v-if="!store.user" class="plan">
       <div class="wrap plan-in">
         <img src="/img/coach-arms-640.webp" alt="الكوتش المقنّع" class="plan-coach" loading="lazy" />
         <div class="plan-copy">
@@ -124,7 +124,7 @@ const done30 = computed(() => doneDays('30'))
       </div>
     </section>
 
-    <section class="sec wrap">
+    <section v-if="!store.user" class="sec wrap">
       <div class="sec-head"><h2>أسئلة <span class="hl">بتتسأل</span></h2></div>
       <Faq />
     </section>

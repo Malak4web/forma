@@ -5,6 +5,7 @@
     <RouterLink to="/admin/programs">البرامج</RouterLink>
     <RouterLink to="/admin/members">الأعضاء</RouterLink>
     <RouterLink to="/admin/subscriptions">الاشتراكات</RouterLink>
+    <RouterLink to="/admin/inbox">رسايل المشتركين</RouterLink>
     <RouterLink to="/admin/followups">المتابعات</RouterLink>
     <RouterLink to="/admin/orders">الطلبات</RouterLink>
     <RouterLink to="/admin/transformations">التحولات</RouterLink>

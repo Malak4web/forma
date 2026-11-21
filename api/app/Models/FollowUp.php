@@ -18,6 +18,7 @@ class FollowUp extends Model
         'followup_date',
         'next_followup_date',
         'status',
+        'source',
         'weight_kg',
         'waist_cm',
         'chest_cm',

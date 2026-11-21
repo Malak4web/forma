@@ -19,7 +19,17 @@ class SettingsController extends Controller
         return response()->json([
             'plans' => Plan::with('programs')->orderBy('sort')->get()->map(fn (Plan $p) => $this->plan($p)),
             'payment_methods' => $payments->adminList(),
+            'coach' => ['open_to_free' => (bool) Setting::get('coach.open_to_free', false)],
         ]);
+    }
+
+    /** Who can chat with the coach / send check-ins: paid members only (default) or everyone. */
+    public function updateCoach(Request $request): JsonResponse
+    {
+        $data = $request->validate(['open_to_free' => ['required', 'boolean']]);
+        Setting::put('coach.open_to_free', $data['open_to_free'], $request->user()->id);
+
+        return response()->json(['coach' => $data]);
     }
 
     public function updatePlan(Request $request, Plan $plan): JsonResponse

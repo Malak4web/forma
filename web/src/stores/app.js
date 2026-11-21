@@ -15,6 +15,10 @@ export const store = reactive({
   completed: {},       // { [programSlug]: number[] } (server)
   weights: [],         // { date, kg }
   orders: [],
+  nutrition: null,     // saved plan on the account: { input, kcal, protein, carbs, fat, since }
+  logs: [],            // last 35 days: { date, water, meals: number[] }
+  workoutDates: [],    // 'YYYY-MM-DD' days with a finished workout
+  coach: { access: false, unread: 0, last: null },
   calc: local.calc || null,                 // last calculator input + result (+ leadName)
   guestCompleted: local.guestCompleted || {}, // progress before signing up
   toast: null,
@@ -23,6 +27,17 @@ export const store = reactive({
 watch(() => [store.calc, store.guestCompleted], () => {
   try { localStorage.setItem(KEY, JSON.stringify({ calc: store.calc, guestCompleted: store.guestCompleted })) } catch { /* private mode */ }
 }, { deep: true })
+
+const planKey = (c) => (c?.kcal ? JSON.stringify([c.kcal, c.protein, c.carbs, c.fat, c.input?.diet, c.input?.weight, c.input?.goal]) : '')
+const samePlan = (a, b) => planKey(a) === planKey(b)
+
+// signed-in: whatever the calculator produces is saved on the account (debounced)
+let nutTimer
+watch(() => planKey(store.calc), (k) => {
+  if (!store.user || !k || samePlan(store.calc, store.nutrition)) return
+  clearTimeout(nutTimer)
+  nutTimer = setTimeout(() => saveNutrition().catch(() => {}), 900)
+})
 
 let toastTimer
 export function toast(msg, kind = 'ok') {
@@ -38,16 +53,31 @@ function apply(s) {
   store.completed = Array.isArray(s.completed) ? {} : (s.completed ?? {})
   store.weights = s.weights ?? []
   store.orders = s.orders ?? []
+  store.nutrition = s.nutrition ?? null
+  store.logs = s.logs ?? []
+  store.workoutDates = s.workout_dates ?? []
+  store.coach = s.coach ?? { access: false, unread: 0, last: null }
+  // the account's plan wins over this browser's calculator copy (other device, coach edits…)
+  if (store.nutrition && !samePlan(store.nutrition, store.calc)) {
+    const { input, kcal, protein, carbs, fat } = store.nutrition
+    store.calc = { ...store.calc, input, kcal, protein, carbs, fat, weight: input.weight }
+  }
 }
 
 export async function loadMe() {
+  const localCalc = store.calc
   try { apply(await api('/me')) } catch { apply({ user: null }) }
+  // members from before plans lived on the account: move this browser's calculator result up
+  if (store.user && !store.nutrition && localCalc?.kcal) { store.calc = localCalc; saveNutrition().catch(() => {}) }
   store.ready = true
 }
 
 /* ---------- auth ---------- */
 async function afterAuth(state) {
+  const localCalc = store.calc
   apply(state)
+  // first login after using the calculator as a guest → keep that plan on the account
+  if (!store.nutrition && localCalc?.kcal) { store.calc = localCalc; saveNutrition().catch(() => {}) }
   if (Object.keys(store.guestCompleted).length) {
     try { apply(await api('/progress/import', { method: 'POST', body: { completed: store.guestCompleted } })); store.guestCompleted = {} } catch { /* keep local copy */ }
   }
@@ -98,6 +128,51 @@ export async function completeDay(programId, n) {
 
 export async function logWeight(kg) {
   apply(await api('/weights', { method: 'POST', body: { kg } }))
+}
+
+/* ---------- daily tracking ---------- */
+export const ymd = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+export const logOf = (date = ymd()) => store.logs.find((l) => l.date === date) || { date, water: 0, meals: [] }
+
+export async function saveNutrition() {
+  const c = store.calc
+  if (!store.user || !c?.kcal || !c.input) return
+  const { input, kcal, protein, carbs, fat } = c
+  apply(await api('/me/nutrition', { method: 'PUT', body: { input, kcal, protein, carbs, fat } }))
+}
+
+// optimistic: update the day locally, then sync
+async function patchLog(date, patch) {
+  const cur = logOf(date)
+  const next = { ...cur, ...patch }
+  const i = store.logs.findIndex((l) => l.date === date)
+  i >= 0 ? (store.logs[i] = next) : store.logs.push(next)
+  try { apply(await api(`/logs/${date}`, { method: 'PUT', body: patch })) } catch (e) {
+    i >= 0 ? (store.logs[i] = cur) : store.logs.splice(store.logs.indexOf(next), 1)
+    toast(e.message, 'err')
+  }
+}
+export const setWater = (n, date = ymd()) => patchLog(date, { water: Math.max(0, Math.min(16, n)) })
+export function toggleMeal(i, date = ymd()) {
+  const m = logOf(date).meals
+  return patchLog(date, { meals: m.includes(i) ? m.filter((x) => x !== i) : [...m, i].sort() })
+}
+
+/** A day counts when anything was done: workout, a meal ticked or water logged. */
+export const activeDay = (date) => store.workoutDates.includes(date) || (() => { const l = logOf(date); return l.water > 0 || l.meals.length > 0 })()
+export function streak() {
+  const d = new Date()
+  if (!activeDay(ymd(d))) d.setDate(d.getDate() - 1) // today not started yet doesn't break it
+  let n = 0
+  while (activeDay(ymd(d)) && n < 400) { n++; d.setDate(d.getDate() - 1) }
+  return n
+}
+
+/* ---------- coach ---------- */
+export const coachApi = {
+  load: () => api('/coach'),
+  send: (body) => api('/coach/messages', { method: 'POST', body: { body } }),
+  checkin: (data) => api('/coach/checkins', { method: 'POST', body: data }),
 }
 
 /* ---------- leads ---------- */

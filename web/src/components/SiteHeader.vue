@@ -12,7 +12,7 @@ const route = useRoute()
 const router = useRouter()
 const more = ref(false)
 const scrolled = ref(false)
-const links = [
+const guestLinks = [
   { to: '/library', label: 'المكتبة' },
   { to: '/programs', label: 'البرامج' },
   { to: '/training', label: 'أنظمة التدريب' },
@@ -20,6 +20,16 @@ const links = [
   { to: '/calculator', label: 'احسب سعراتك' },
   { to: '/pricing', label: 'الباقات' },
 ]
+// signed-in members: their day first, discovery after
+const memberLinks = [
+  { to: '/', label: 'النهارده' },
+  { to: '/progress', label: 'تقدّمي' },
+  { to: '/coach', label: 'الكوتش', coach: true },
+  { to: '/programs', label: 'البرامج' },
+  { to: '/library', label: 'المكتبة' },
+  { to: '/diets', label: 'أنظمة الأكل' },
+]
+const links = computed(() => (store.user ? memberLinks : guestLinks))
 const isTab = computed(() => !!route.meta.tab)
 const onScroll = () => (scrolled.value = scrollY > 24)
 onMounted(() => { onScroll(); addEventListener('scroll', onScroll, { passive: true }) })
@@ -46,14 +56,17 @@ function back() {
 
       <template v-if="!bare">
         <nav class="links" aria-label="القائمة الرئيسية">
-          <RouterLink v-for="l in links" :key="l.to" :to="l.to">{{ l.label }}</RouterLink>
+          <RouterLink v-for="l in links" :key="l.to" :to="l.to">
+            {{ l.label }}<i v-if="l.coach && store.coach.unread" class="unread num">{{ store.coach.unread }}</i>
+          </RouterLink>
         </nav>
         <div class="acts">
           <RouterLink v-if="store.user" to="/account" class="acc" aria-label="حسابي">
             <span class="avatar">{{ store.user.name.charAt(0) }}</span><span class="acc-l">حسابي</span>
           </RouterLink>
           <RouterLink v-else to="/login" class="login">دخول</RouterLink>
-          <RouterLink v-if="!store.subscription" to="/calculator" class="btn btn-primary btn-sm cta">نظامك ببلاش</RouterLink>
+          <RouterLink v-if="!store.user" to="/calculator" class="btn btn-primary btn-sm cta">نظامك ببلاش</RouterLink>
+          <RouterLink v-else-if="!store.subscription" to="/pricing" class="btn btn-primary btn-sm cta">اشترك</RouterLink>
           <button class="more" aria-label="المزيد" @click="more = true">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>
           </button>
@@ -71,6 +84,7 @@ function back() {
       <RouterLink to="/calculator"><span>🔥</span>احسب سعراتك وخد نظامك ببلاش</RouterLink>
       <RouterLink to="/pricing"><span>⭐</span>الباقات والأسعار</RouterLink>
       <RouterLink to="/programs"><span>📅</span>كل البرامج</RouterLink>
+      <RouterLink v-if="store.user" to="/library"><span>🎬</span>مكتبة التمارين</RouterLink>
       <RouterLink v-if="store.user?.is_admin" to="/admin"><span>🛠️</span>لوحة الأدمن</RouterLink>
       <SocialLinks title="تابعنا" class="sheet-soc" />
       <template v-if="!store.user">
@@ -90,6 +104,7 @@ function back() {
 .links { display: none; gap: 24px; margin-inline-start: 12px; font-weight: 700; }
 .links a { color: rgba(255,255,255,.8); padding-block: 6px; border-bottom: 2px solid transparent; }
 .links a:hover, .links a.router-link-active { color: #fff; border-color: var(--orange); }
+.unread { display: inline-block; margin-inline-start: 5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--orange); color: #0a0a0a; font-style: normal; font-size: .85rem; line-height: 18px; text-align: center; vertical-align: 2px; }
 .acts { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
 .login { font-weight: 800; font-size: .92rem; padding: 6px 4px; }
 .acc { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: .92rem; }

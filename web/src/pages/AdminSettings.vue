@@ -8,6 +8,7 @@ import { toast } from '../stores/app.js'
 const plans = ref([])
 const methods = ref([])
 const loading = ref(true)
+const coachOpen = ref(false)
 const busy = reactive({})
 const errs = reactive({}) // { [id]: { field: msg } }
 
@@ -20,6 +21,7 @@ async function load() {
     const s = await api('/admin/settings')
     plans.value = s.plans.map(toForm)
     methods.value = s.payment_methods.map((m) => ({ ...m, account: m.account || '' }))
+    coachOpen.value = !!s.coach?.open_to_free
   } catch (e) { toast(e.message, 'err') }
   finally { loading.value = false }
 }
@@ -46,6 +48,9 @@ const savePlan = (p) => save('plan', p, {
   features: p.featuresText.split('\n').map((s) => s.trim()).filter(Boolean),
 })
 const saveMethod = (m) => save('method', m, { enabled: m.enabled, account: m.account.trim() || null, hint: m.hint })
+async function saveCoach() {
+  try { await api('/admin/coach-settings', { method: 'PUT', body: { open_to_free: coachOpen.value } }); toast('اتحفظ ✓') } catch (e) { coachOpen.value = !coachOpen.value; toast(e.message, 'err') }
+}
 const err = (id, f) => errs[id]?.[f] || errs[id]?.[`${f}.0`]
 </script>
 
@@ -81,6 +86,15 @@ const err = (id, f) => errs[id]?.[f] || errs[id]?.[`${f}.0`]
           <small v-if="err(m.id, 'enabled')" class="err">{{ err(m.id, 'enabled') }}</small>
           <button class="btn btn-primary btn-sm" :disabled="busy[m.id]">{{ busy[m.id] ? 'بنحفظ…' : 'احفظ' }}</button>
         </form>
+      </section>
+
+      <!-- COACH ACCESS -->
+      <section class="block">
+        <h2>الكوتش</h2>
+        <div class="card">
+          <label class="check"><input v-model="coachOpen" type="checkbox" @change="saveCoach" /> افتح الكلام مع الكوتش ومتابعة الأسبوع للمستخدمين المجانيين كمان</label>
+          <p class="muted small">مقفول = المحادثة والمتابعة للمشتركين في باقة مدفوعة بس. فتحه مفيد في الأول عشان تبني ثقة، بس هيزوّد الرسايل عليك. الرسايل بتوصل في «رسايل المشتركين».</p>
+        </div>
       </section>
 
       <!-- PLANS -->

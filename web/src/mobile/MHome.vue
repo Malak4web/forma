@@ -4,6 +4,7 @@ import MAppBar from './MAppBar.vue'
 import MRail from './MRail.vue'
 import TransformationsMarquee from '../components/TransformationsMarquee.vue'
 import SocialLinks from '../components/SocialLinks.vue'
+import MemberToday from '../components/MemberToday.vue'
 import { videos, programs, programDay, plans } from '../data.js'
 import { store, nextWorkout, doneDays, hasAccess, greeting } from '../stores/app.js'
 import { DIETS, dietBySlug } from '../diets/data.js'
@@ -54,7 +55,7 @@ const goals = [
       <template #start>
         <div v-if="store.user" class="hi">
           <small>{{ greeting() }}{{ firstName ? ` يا ${firstName}` : '' }} 👊</small>
-          <b>{{ next?.started ? 'نكمّل؟' : 'يلا نبدأ؟' }}</b>
+          <b>يومك النهارده</b>
         </div>
         <RouterLink v-else to="/" class="logo">
           <img src="/img/logo-icon.webp" alt="" />
@@ -71,49 +72,7 @@ const goals = [
     </MAppBar>
 
     <!-- ========== member: today ========== -->
-    <template v-if="store.user && p && nextDay">
-      <div class="m-pad">
-        <RouterLink :to="`/workout/${p.id}/${next.day}`" class="today">
-          <img :src="nextDay.items[0]?.img || p.img" alt="" />
-          <div class="today-top">
-            <span class="pill">{{ p.title }}</span>
-            <svg class="m-ring" viewBox="0 0 64 64" width="60" height="60" :aria-label="`خلّصت ${done.length} من ${p.days}`">
-              <circle class="tk" cx="32" cy="32" :r="R" />
-              <circle class="pg" cx="32" cy="32" :r="R" :stroke-dasharray="C" :stroke-dashoffset="C * (1 - pct)" />
-              <text x="32" y="37" text-anchor="middle">{{ done.length }}/{{ p.days }}</text>
-            </svg>
-          </div>
-          <div class="today-b">
-            <small class="amber">الأسبوع <span class="num">{{ nextDay.week }}</span> · {{ nextDay.title }}</small>
-            <h2>اليوم <span class="num hl">{{ next.day }}</span></h2>
-            <small class="en moves">{{ nextDay.items.map((i) => i.title).join(' · ') }}</small>
-          </div>
-        </RouterLink>
-        <RouterLink :to="`/workout/${p.id}/${next.day}`" class="btn btn-primary go-btn">▶ ابدأ تمرين النهارده</RouterLink>
-      </div>
-
-      <section class="m-pad blk">
-        <header class="bh"><h2>أسبوعك</h2><span class="num cnt">WEEK {{ nextDay.week }}</span></header>
-        <div class="week">
-          <RouterLink v-for="d in week" :key="d.n" :to="`/programs/${p.id}`" class="wd" :class="{ done: d.done, today: d.today, rest: d.rest }">
-            <span v-if="d.rest && !d.done">😌</span><span v-else class="num">{{ d.n }}</span>
-          </RouterLink>
-        </div>
-      </section>
-
-      <section class="m-pad blk">
-        <header class="bh"><h2>أرقامك</h2></header>
-        <div class="stats">
-          <RouterLink to="/account" class="m-card m-stat"><b class="num">{{ totalDone }}</b><span>يوم خلّصته</span></RouterLink>
-          <RouterLink to="/account" class="m-card m-stat"><b class="num">{{ lastKg ?? '—' }}</b><span>وزنك</span></RouterLink>
-          <RouterLink to="/account" class="m-card m-stat"><b class="num" :class="{ amber: diff !== null && diff <= 0 }">{{ diff === null ? '—' : (diff > 0 ? '+' : '') + diff }}</b><span>من البداية</span></RouterLink>
-        </div>
-      </section>
-
-      <RouterLink v-if="!hasAccess(p.id)" to="/pricing" class="upsell m-pad">
-        <span>🔓</span><div><b>افتح البرنامج كله</b><small>أول 3 أيام ببلاش — كمّل من غير ما تقف</small></div><i>‹</i>
-      </RouterLink>
-    </template>
+    <div v-if="store.user" class="m-pad"><MemberToday mobile /></div>
 
     <!-- ========== guest: banners + goals + today ========== -->
     <template v-else>
