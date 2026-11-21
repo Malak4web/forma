@@ -25,9 +25,10 @@ const memberLinks = [
   { to: '/', label: 'النهارده' },
   { to: '/progress', label: 'تقدّمي' },
   { to: '/coach', label: 'الكوتش', coach: true },
+  { to: '/training', label: 'التدريب' },
+  { to: '/diets', label: 'الأكل' },
   { to: '/programs', label: 'البرامج' },
   { to: '/library', label: 'المكتبة' },
-  { to: '/diets', label: 'أنظمة الأكل' },
 ]
 const links = computed(() => (store.user ? memberLinks : guestLinks))
 const isTab = computed(() => !!route.meta.tab)

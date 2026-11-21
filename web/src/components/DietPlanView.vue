@@ -2,7 +2,6 @@
 // The free plan, tailored: the diet the visitor picked in the calculator, scaled to their calories.
 import { ref, computed } from 'vue'
 import { dietBySlug, dietDay, CYCLE_LABEL } from '../diets/data.js'
-import { motifBg } from '../diets/motifs.js'
 
 const props = defineProps({ calc: { type: Object, required: true }, mobile: Boolean })
 const d = computed(() => dietBySlug(props.calc.input?.diet))
@@ -12,22 +11,14 @@ const factor = computed(() => (d.value?.noKcal || !plan.value?.kcal ? 1 : props.
 const kc = (k) => Math.round((k * factor.value) / 10) * 10
 const pct = computed(() => Math.round((factor.value - 1) * 100))
 const days = Array.from({ length: 7 }, (_, i) => i + 1)
-const vars = computed(() => {
-  const t = d.value.theme
-  return {
-    '--bg': t.bg, '--sf': t.surface, '--ink': t.ink, '--a': t.a, '--b': t.b,
-    '--line': t.mode === 'light' ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.1)',
-    '--soft': t.mode === 'light' ? 'rgba(0,0,0,.58)' : 'rgba(255,255,255,.64)',
-    backgroundImage: motifBg(t.motif, t.a, t.mode === 'light' ? 0.2 : 0.12),
-  }
-})
+// one brand palette for every diet
+const vars = { '--bg': '#0e0e0e', '--sf': '#141414', '--ink': '#fff', '--a': '#ff6a00', '--b': '#ffb000', '--line': '#262626', '--soft': 'rgba(255,255,255,.64)' }
 </script>
 
 <template>
-  <section v-if="d" class="dpv" :class="[d.theme.mode, { mob: mobile }]" :style="vars">
+  <section v-if="d" class="dpv" :class="{ mob: mobile }" :style="vars">
     <!-- head -->
     <header class="head">
-      <span class="e" aria-hidden="true">{{ d.emoji }}</span>
       <div class="ht">
         <small class="en">{{ d.en }}</small>
         <h2>نظام {{ d.name }} <span class="acc">على قدّك</span></h2>
@@ -64,7 +55,6 @@ const vars = computed(() => {
         </div>
         <ul class="meals">
           <li v-for="(m, i) in plan.meals" :key="i">
-            <span class="ic">{{ m.icon }}</span>
             <span class="x"><small>{{ m.label }}</small><b>{{ m.n }}</b></span>
             <span v-if="m.k && !d.noKcal" class="k num">{{ kc(m.k) }}</span>
           </li>
@@ -86,7 +76,7 @@ const vars = computed(() => {
 </template>
 
 <style scoped>
-.dpv { display: grid; gap: 14px; padding: 18px; border-radius: 24px; background-color: var(--bg); color: var(--ink); border: 1px solid color-mix(in srgb, var(--a) 35%, transparent); }
+.dpv { display: grid; gap: 14px; padding: 18px; border-radius: 24px; background-color: var(--bg); color: var(--ink); border: 1px solid var(--line); }
 .acc { color: var(--a); }
 .head { display: flex; gap: 12px; align-items: flex-start; }
 .e { width: 56px; height: 56px; flex: none; border-radius: 16px; display: grid; place-items: center; font-size: 1.8rem; background: var(--sf); border: 1px solid var(--line); }

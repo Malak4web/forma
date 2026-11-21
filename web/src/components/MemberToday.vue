@@ -50,6 +50,13 @@ const spark = computed(() => {
 const coach = computed(() => store.coach)
 const checkinDue = computed(() => coach.value.access && (!coach.value.last_checkin || daysAgo(coach.value.last_checkin) >= 7))
 const paid = computed(() => !!store.subscription)
+
+const explore = [
+  { to: '/training', t: 'أنظمة التدريب', d: 'فول بادي، بوش بول ليجز، 5×5… برنامج 4 أسابيع' },
+  { to: '/diets', t: 'أنظمة الأكل', d: 'كيتو، صيام متقطع، الطيبات… خطة 30 يوم' },
+  { to: '/programs', t: 'البرامج', d: 'تحدّي 30 يوم وبرامج البيت' },
+  { to: '/library', t: 'مكتبة التمارين', d: 'كل تمرين بفيديو قصير' },
+]
 </script>
 
 <template>
@@ -231,6 +238,15 @@ const paid = computed(() => !!store.subscription)
           </div>
           <div class="legend"><span><i class="l1"></i>تمرين</span><span><i class="l2"></i>أكل</span><span><i class="l3"></i>مية</span></div>
         </RouterLink>
+
+        <!-- explore: everything outside today -->
+        <nav class="card xp" aria-label="استكشف">
+          <div class="c-h"><h2>استكشف</h2></div>
+          <RouterLink v-for="x in explore" :key="x.to" :to="x.to" class="xp-r">
+            <span><b>{{ x.t }}</b><small>{{ x.d }}</small></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+          </RouterLink>
+        </nav>
       </aside>
     </div>
   </section>
@@ -381,4 +397,11 @@ const paid = computed(() => !!store.subscription)
   .sc { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; }
   .sc .ic { font-size: 1.1rem; }
 }
+.xp { display: grid; }
+.xp-r { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid rgba(255,255,255,.07); }
+.xp-r span { flex: 1; display: grid; min-width: 0; }
+.xp-r b { font-size: .95rem; }
+.xp-r small { font-size: .76rem; color: var(--muted); }
+.xp-r svg { width: 18px; height: 18px; flex: none; color: rgba(255,255,255,.4); }
+.xp-r:hover b, .xp-r:hover svg { color: var(--orange); }
 </style>

@@ -3,25 +3,14 @@ import { ref, reactive, computed, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import NotFound from './NotFound.vue'
 import MAppBar from '../mobile/MAppBar.vue'
+import SxIcon from '../components/SxIcon.vue'
 import { MOBILE } from '../mobile/device.js'
-import DietVisual from '../diets/DietVisual.vue'
 import { DIETS, dietBySlug, dietDay, CYCLE_LABEL } from '../diets/data.js'
-import { motifBg } from '../diets/motifs.js'
 import { store } from '../stores/app.js'
 
 const route = useRoute()
 const d = computed(() => dietBySlug(route.params.slug))
 watchEffect(() => { if (d.value) document.title = `نظام ${d.value.name} (${d.value.en}) — خطة 30 يوم | فورمة` })
-
-const vars = computed(() => {
-  const t = d.value.theme
-  return {
-    '--bg': t.bg, '--sf': t.surface, '--ink': t.ink, '--a': t.a, '--b': t.b,
-    '--line': t.mode === 'light' ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.1)',
-    '--soft': t.mode === 'light' ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.62)',
-    '--motif': motifBg(t.motif, t.a, t.mode === 'light' ? 0.22 : 0.14),
-  }
-})
 
 /* ───── 30-day plan: week tabs + 7-day row + selected day ───── */
 const week = ref(1)
@@ -59,269 +48,162 @@ const tab = ref('eat')
 const toggleShop = (item) => { const i = saved.shop.indexOf(item); i >= 0 ? saved.shop.splice(i, 1) : saved.shop.push(item) }
 const others = computed(() => DIETS.filter((x) => x.slug !== d.value?.slug))
 const scrollToPlan = () => document.getElementById('plan')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-const levelTxt = (n) => ['', 'سهل', 'متوسط', 'صعب', 'صعب جدًا'][n]
+const cycleLabels = computed(() => d.value?.cycleLabels || CYCLE_LABEL)
 </script>
 
 <template>
   <NotFound v-if="!d" />
-  <article v-else class="diet" :class="[d.theme.mode, `vis-${d.visual}`, { mob: MOBILE }]" :style="vars">
-    <MAppBar v-if="MOBILE" transparent fallback="/diets" />
+  <article v-else class="sx" :class="{ mob: MOBILE }">
+    <MAppBar v-if="MOBILE" :title="d.name" fallback="/diets" />
 
-    <!-- ───── HERO ───── -->
-    <header class="hero">
-      <div class="motif" aria-hidden="true"></div>
-      <div class="wrap hero-in">
-        <div class="copy">
-          <RouterLink v-if="!MOBILE" to="/diets" class="crumb">أنظمة الأكل ‹</RouterLink>
-          <span class="badge"><span aria-hidden="true">{{ d.emoji }}</span> خطة <span class="num">30</span> يوم</span>
-          <span class="en">{{ d.en }}</span>
-          <h1>نظام {{ d.name }}</h1>
-          <p class="tag">{{ d.tagline }}</p>
-          <div class="facts">
-            <span>الصعوبة: <b>{{ levelTxt(d.levelN) }}</b></span>
-            <span v-for="t in d.tags" :key="t">{{ t }}</span>
-          </div>
-          <button class="cta" @click="scrollToPlan">ابدأ اليوم <span class="num">{{ day }}</span> ←</button>
-        </div>
-        <div class="art">
-          <div class="ring"><DietVisual :diet="d" :size="MOBILE ? 220 : 300" /></div>
-        </div>
+    <!-- ───── HERO: name + spec sheet ───── -->
+    <header class="wrap sx-hero">
+      <RouterLink v-if="!MOBILE" to="/diets" class="sx-crumb"><SxIcon name="right" />أنظمة الأكل</RouterLink>
+      <h1>نظام {{ d.name }}</h1>
+      <span class="sx-en">{{ d.en }}</span>
+      <p class="sx-lead">{{ d.tagline }}</p>
+      <div v-if="d.tags?.length" class="sx-tags"><span v-for="t in d.tags" :key="t">{{ t }}</span></div>
+
+      <dl class="sx-spec">
+        <template v-if="d.macros">
+          <div><dt>كارب</dt><dd><span class="num">{{ d.macros.c }}%</span></dd></div>
+          <div><dt>بروتين</dt><dd><span class="num">{{ d.macros.p }}%</span></dd></div>
+          <div><dt>دهون</dt><dd><span class="num">{{ d.macros.f }}%</span></dd></div>
+        </template>
+        <template v-else>
+          <div><dt>السعرات</dt><dd>من غير عدّ</dd></div>
+          <div><dt>مسموح</dt><dd><span class="num">{{ d.eat.length }}</span> مجموعات</dd></div>
+          <div><dt>ممنوع</dt><dd><span class="num">{{ d.avoid.length }}</span> مجموعات</dd></div>
+        </template>
+        <div><dt>الصعوبة</dt><dd>{{ d.level }}</dd></div>
+      </dl>
+      <div v-if="d.macros" class="sx-bar" aria-hidden="true">
+        <i class="c" :style="{ flex: d.macros.c || 0.001 }"></i><i class="p" :style="{ flex: d.macros.p }"></i><i class="f" :style="{ flex: d.macros.f }"></i>
+      </div>
+
+      <div class="sx-cta">
+        <button class="btn btn-primary" @click="scrollToPlan">{{ saved.done.length ? 'كمّل' : 'ابدأ' }} من اليوم <span class="num">{{ day }}</span></button>
+        <small v-if="saved.done.length"><span class="num">{{ saved.done.length }}/30</span> يوم خلّصته</small>
       </div>
     </header>
 
-    <!-- ───── MACROS STRIP ───── -->
-    <section v-if="d.macros" class="wrap strip">
-      <div class="mac"><b class="num">{{ d.macros.c }}%</b><span>كارب</span><i :style="{ width: d.macros.c + '%' }" class="ic"></i></div>
-      <div class="mac"><b class="num">{{ d.macros.p }}%</b><span>بروتين</span><i :style="{ width: d.macros.p + '%' }" class="ip"></i></div>
-      <div class="mac"><b class="num">{{ d.macros.f }}%</b><span>دهون</span><i :style="{ width: d.macros.f + '%' }" class="if"></i></div>
-    </section>
-
     <!-- ───── HOW ───── -->
-    <section class="wrap sec">
-      <h2 class="h">بيشتغل <span class="acc">إزاي؟</span></h2>
-      <ol class="how">
-        <li v-for="(h, i) in d.how" :key="h.t"><span class="n num">0{{ i + 1 }}</span><b>{{ h.t }}</b><p>{{ h.d }}</p></li>
+    <section class="wrap sx-sec">
+      <div class="sx-h"><h2>بيشتغل إزاي؟</h2></div>
+      <ol class="sx-steps">
+        <li v-for="h in d.how" :key="h.t"><b>{{ h.t }}</b><p>{{ h.d }}</p></li>
       </ol>
     </section>
 
-    <!-- ───── EAT / AVOID / FOR WHO ───── -->
-    <section class="wrap sec">
-      <div class="seg" role="tablist">
-        <button role="tab" :aria-selected="tab === 'eat'" :class="{ on: tab === 'eat' }" @click="tab = 'eat'">✓ كُل</button>
-        <button role="tab" :aria-selected="tab === 'avoid'" :class="{ on: tab === 'avoid' }" @click="tab = 'avoid'">✕ ابعد عن</button>
-        <button role="tab" :aria-selected="tab === 'who'" :class="{ on: tab === 'who' }" @click="tab = 'who'">مناسب لمين؟</button>
+    <!-- ───── EAT / AVOID ───── -->
+    <section class="wrap sx-sec">
+      <div class="sx-h"><h2>تاكل إيه؟</h2></div>
+      <div v-if="MOBILE" class="sx-seg" role="tablist">
+        <button role="tab" :aria-selected="tab === 'eat'" :class="{ on: tab === 'eat' }" @click="tab = 'eat'">كُل</button>
+        <button role="tab" :aria-selected="tab === 'avoid'" :class="{ on: tab === 'avoid' }" @click="tab = 'avoid'">ابعد عن</button>
       </div>
-      <div class="pane">
-        <ul v-if="tab === 'eat'" class="tick yes"><li v-for="x in d.eat" :key="x">{{ x }}</li></ul>
-        <ul v-else-if="tab === 'avoid'" class="tick no"><li v-for="x in d.avoid" :key="x">{{ x }}</li></ul>
-        <div v-else class="who">
-          <div><b>مناسب لـ</b><ul class="tick yes"><li v-for="x in d.goodFor" :key="x">{{ x }}</li></ul></div>
-          <div><b>مش مناسب لـ</b><ul class="tick no"><li v-for="x in d.notFor" :key="x">{{ x }}</li></ul></div>
+      <div class="sx-cols">
+        <div v-if="!MOBILE || tab === 'eat'">
+          <h3 v-if="!MOBILE">كُل</h3>
+          <ul class="sx-check yes"><li v-for="x in d.eat" :key="x"><SxIcon name="check" />{{ x }}</li></ul>
         </div>
+        <div v-if="!MOBILE || tab === 'avoid'">
+          <h3 v-if="!MOBILE">ابعد عن</h3>
+          <ul class="sx-check no"><li v-for="x in d.avoid" :key="x"><SxIcon name="x" />{{ x }}</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───── FOR WHO ───── -->
+    <section class="wrap sx-sec">
+      <div class="sx-h"><h2>مناسب لمين؟</h2></div>
+      <div class="sx-cols">
+        <div><h3>مناسب لـ</h3><ul class="sx-check yes"><li v-for="x in d.goodFor" :key="x"><SxIcon name="check" />{{ x }}</li></ul></div>
+        <div><h3>مش مناسب لـ</h3><ul class="sx-check no"><li v-for="x in d.notFor" :key="x"><SxIcon name="x" />{{ x }}</li></ul></div>
       </div>
     </section>
 
     <!-- ───── 30-DAY PLAN ───── -->
-    <section id="plan" class="wrap sec">
-      <div class="plan-h">
-        <h2 class="h">خطة الـ <span class="acc num">30</span> يوم</h2>
-        <span class="prog"><span class="num">{{ saved.done.length }}/30</span> يوم خلّصته</span>
+    <section id="plan" class="wrap sx-sec">
+      <div class="sx-h">
+        <h2>خطة الـ <span class="num">30</span> يوم</h2>
+        <small><span class="num">{{ saved.done.length }}/30</span> يوم خلّصته</small>
       </div>
-      <div class="weeks" role="tablist">
+      <div class="sx-weeks" role="tablist">
         <button v-for="w in weeks" :key="w" role="tab" :aria-selected="week === w" :class="{ on: week === w }" @click="pickWeek(w)">
-          {{ w === 5 ? 'آخر يومين' : `أسبوع ${w}` }}
+          {{ w === 5 ? 'آخر يومين' : `الأسبوع ${w}` }}
         </button>
       </div>
-      <div class="days">
+      <div class="sx-days">
         <button
-          v-for="n in weekDays" :key="n" class="dd"
+          v-for="n in weekDays" :key="n" class="sx-d"
           :class="{ sel: day === n, done: saved.done.includes(n), [`t-${dietDay(d, n).type}`]: d.cycle }"
-          :aria-label="`اليوم ${n}`" @click="day = n"
+          :aria-label="`اليوم ${n}`" :aria-pressed="day === n" @click="day = n"
         ><span class="num">{{ n }}</span></button>
       </div>
+      <div v-if="d.cycle" class="sx-key">
+        <span v-if="cycleLabels.high"><i style="background: var(--amber)"></i>{{ cycleLabels.high }}</span>
+        <span v-if="cycleLabels.mid"><i style="background: #777"></i>{{ cycleLabels.mid }}</span>
+        <span v-if="cycleLabels.low"><i style="border: 1px solid #555"></i>{{ cycleLabels.low }}</span>
+      </div>
 
-      <Transition name="fade" mode="out-in">
-        <div v-if="plan" :key="day" class="daycard">
-          <header class="dc-h">
+      <Transition name="sx-fade" mode="out-in">
+        <div v-if="plan" :key="day" class="sx-day">
+          <header class="sx-day-h">
             <div>
+              <small v-if="plan.type">{{ cycleLabels[plan.type] }}</small>
               <b>اليوم <span class="num">{{ day }}</span></b>
-              <small v-if="plan.type" class="ty">{{ (d.cycleLabels || CYCLE_LABEL)[plan.type] }}</small>
             </div>
-            <span v-if="!d.noKcal" class="kc">≈ <span class="num">{{ plan.kcal }}</span> سعرة</span>
+            <span v-if="!d.noKcal" class="sx-kc"><span class="num">{{ plan.kcal }}</span>سعرة تقريبًا</span>
           </header>
-          <ul class="meals">
-            <li v-for="(meal, i) in plan.meals" :key="i">
-              <span class="ic">{{ meal.icon }}</span>
-              <span class="x"><small>{{ meal.label }}</small><b>{{ meal.n }}</b></span>
-              <span v-if="meal.k" class="k"><span class="num">{{ meal.k }}</span></span>
-            </li>
-          </ul>
-          <p v-if="d.noKcal" class="scale">الكميات على قد جوعك — «كُل لما تجوع وبطّل قبل الشبع».</p>
-          <p v-else-if="scale !== null && Math.abs(scale) >= 5" class="scale">
-            احتياجك حسب الحاسبة <b class="num">{{ target }}</b> سعرة — {{ scale > 0 ? 'زوّد' : 'قلّل' }} الكميات حوالي <b class="num">{{ Math.abs(scale) }}%</b>.
-          </p>
-          <p v-else-if="scale === null" class="scale">الكميات تقريبية. <RouterLink to="/calculator">احسب سعراتك</RouterLink> عشان نظبطها على قدّك.</p>
-          <div class="dc-btns">
-            <button class="done-btn" :class="{ on: isDone }" @click="toggleDone">{{ isDone ? '✓ خلّصته' : 'علّم إنه خلص' }}</button>
-            <button v-if="day < 30" class="next" @click="nextDay">اليوم الجاي ‹</button>
+          <div class="sx-day-b">
+            <ul class="sx-meals">
+              <li v-for="(meal, i) in plan.meals" :key="i">
+                <small>{{ meal.label }}</small>
+                <b>{{ meal.n }}</b>
+                <span v-if="meal.k" class="num">{{ meal.k }}</span>
+              </li>
+            </ul>
+            <p v-if="d.noKcal" class="sx-say">الكميات على قد جوعك: «كُل لما تجوع وبطّل قبل الشبع».</p>
+            <p v-else-if="scale !== null && Math.abs(scale) >= 5" class="sx-say">
+              احتياجك حسب الحاسبة <b class="num">{{ target }}</b> سعرة، فـ{{ scale > 0 ? 'زوّد' : 'قلّل' }} الكميات حوالي <b class="num">{{ Math.abs(scale) }}%</b>.
+            </p>
+            <p v-else-if="scale === null" class="sx-say">الكميات تقريبية. <RouterLink to="/calculator">احسب سعراتك</RouterLink> عشان نظبطها على قدّك.</p>
+          </div>
+          <div class="sx-day-f">
+            <button class="sx-btn" :class="{ on: isDone }" :aria-pressed="isDone" @click="toggleDone"><SxIcon v-if="isDone" name="check" />{{ isDone ? 'خلّصته' : 'علّم إنه خلص' }}</button>
+            <button v-if="day < 30" class="sx-btn link" @click="nextDay">اليوم الجاي<SxIcon name="left" /></button>
           </div>
         </div>
       </Transition>
     </section>
 
     <!-- ───── SHOPPING + TIPS ───── -->
-    <section class="wrap sec two">
-      <div class="box">
-        <h3>🛒 قايمة المشتريات</h3>
-        <ul class="shop">
-          <li v-for="item in d.shopping" :key="item">
-            <button :class="{ got: saved.shop.includes(item) }" @click="toggleShop(item)"><i></i>{{ item }}</button>
-          </li>
-        </ul>
-      </div>
-      <div class="box">
-        <h3>💡 نصايح</h3>
-        <ul class="tips"><li v-for="t in d.tips" :key="t">{{ t }}</li></ul>
-        <div class="warn"><b>⚠️ قبل ما تبدأ</b><p>{{ d.warning }}</p></div>
-        <a v-if="d.source" :href="d.source.url" target="_blank" rel="noopener" class="src">المصدر: {{ d.source.label }} ↗</a>
+    <section class="wrap sx-sec">
+      <div class="sx-cols">
+        <div>
+          <div class="sx-h"><h2>المشتريات</h2><small><span class="num">{{ saved.shop.length }}/{{ d.shopping.length }}</span></small></div>
+          <ul class="sx-shop">
+            <li v-for="item in d.shopping" :key="item">
+              <button :class="{ got: saved.shop.includes(item) }" :aria-pressed="saved.shop.includes(item)" @click="toggleShop(item)"><i><SxIcon name="check" /></i>{{ item }}</button>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <div class="sx-h"><h2>نصايح</h2></div>
+          <ul class="sx-tips"><li v-for="t in d.tips" :key="t">{{ t }}</li></ul>
+          <div class="sx-warn"><b>قبل ما تبدأ</b><p>{{ d.warning }}</p></div>
+          <a v-if="d.source" :href="d.source.url" target="_blank" rel="noopener" class="sx-src">المصدر: {{ d.source.label }}</a>
+        </div>
       </div>
     </section>
 
     <!-- ───── OTHER DIETS ───── -->
-    <section class="sec others">
-      <h2 class="h wrap">أنظمة <span class="acc">تانية</span></h2>
-      <div class="rail">
-        <RouterLink v-for="o in others" :key="o.slug" :to="`/diets/${o.slug}`" class="oc" :style="{ '--oa': o.theme.a, '--obg': o.theme.bg, '--oink': o.theme.ink }">
-          <span class="oe">{{ o.emoji }}</span><b>{{ o.name }}</b><small class="en">{{ o.en }}</small>
-        </RouterLink>
-      </div>
+    <section class="wrap sx-sec">
+      <div class="sx-h"><h2>أنظمة تانية</h2><RouterLink to="/diets" class="sx-crumb">الكل</RouterLink></div>
+      <ul class="sx-others">
+        <li v-for="o in others" :key="o.slug"><RouterLink :to="`/diets/${o.slug}`"><b>{{ o.name }}</b><span class="sx-en">{{ o.en }}</span></RouterLink></li>
+      </ul>
     </section>
   </article>
 </template>
-
-<style scoped>
-.diet { background: var(--bg); color: var(--ink); min-height: 100vh; padding-bottom: 60px; }
-.diet.mob { padding-bottom: 30px; }
-.acc { color: var(--a); }
-.light .acc { filter: brightness(.9); }
-
-/* hero */
-.hero { position: relative; overflow: hidden; padding: 36px 0 30px; isolation: isolate; }
-.mob .hero { padding-top: calc(64px + env(safe-area-inset-top)); }
-.motif { position: absolute; inset: 0; z-index: -1; background-image: var(--motif); -webkit-mask: linear-gradient(to bottom, #000 40%, transparent); mask: linear-gradient(to bottom, #000 40%, transparent); }
-.hero::after { content: ''; position: absolute; z-index: -1; width: 520px; height: 520px; border-radius: 50%; inset-inline-start: -160px; top: -200px; background: radial-gradient(circle, color-mix(in srgb, var(--a) 30%, transparent), transparent 65%); }
-.hero-in { display: grid; gap: 20px; align-items: center; }
-@media (min-width: 900px) { .hero-in { grid-template-columns: 1.2fr 1fr; } }
-.copy { display: grid; gap: 10px; justify-items: start; }
-.crumb { font-weight: 800; font-size: .85rem; color: var(--soft); }
-.badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; background: var(--a); color: #0a0a0a; font-weight: 900; font-size: .8rem; }
-.badge .num { font-size: 1rem; }
-.en { font-family: var(--f-num); letter-spacing: .08em; font-size: clamp(2.6rem, 11vw, 5.2rem); line-height: .9; color: transparent; -webkit-text-stroke: 2px var(--a); direction: ltr; }
-.vis-dial .en, .vis-cycle .en { font-size: clamp(2rem, 8vw, 4rem); }
-.copy h1 { font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.1; }
-.tag { font-size: 1.05rem; color: var(--soft); max-width: 50ch; }
-.facts { display: flex; flex-wrap: wrap; gap: 6px; }
-.facts span { padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--sf); font-size: .8rem; font-weight: 700; }
-.facts b { color: var(--a); }
-.cta { margin-top: 6px; min-height: 52px; padding: 0 22px; border-radius: 14px; background: var(--a); color: #0a0a0a; font-family: var(--f-head); font-size: 1.15rem; box-shadow: 0 12px 30px -14px var(--a); }
-.cta:active { transform: scale(.97); }
-.art { display: grid; place-items: center; }
-.ring { padding: 22px; border-radius: 50%; background: radial-gradient(circle, var(--sf) 55%, transparent 72%); border: 1px solid var(--line); box-shadow: 0 0 0 14px color-mix(in srgb, var(--a) 7%, transparent); }
-.vis-protein .ring, .vis-gauge .ring, .vis-cycle .ring, .vis-pulse .ring { border-radius: 30px; padding: 26px 22px; }
-
-/* macros strip */
-.strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.mac { position: relative; overflow: hidden; display: grid; padding: 12px 14px 16px; border-radius: 16px; background: var(--sf); border: 1px solid var(--line); }
-.mac b { font-size: 1.9rem; line-height: 1; }
-.mac span { font-size: .75rem; font-weight: 800; color: var(--soft); }
-.mac i { position: absolute; bottom: 0; inset-inline-start: 0; height: 5px; }
-.mac .ic { background: var(--soft); } .mac .ip { background: var(--b); } .mac .if { background: var(--a); }
-
-/* sections */
-.sec { padding-top: 40px; }
-.h { font-size: clamp(1.7rem, 5vw, 2.4rem); margin-bottom: 14px; }
-.how { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-@media (min-width: 800px) { .how { grid-template-columns: repeat(3, 1fr); } }
-.how li { padding: 16px; border-radius: 18px; background: var(--sf); border: 1px solid var(--line); display: grid; gap: 4px; align-content: start; }
-.how .n { font-size: 2.4rem; line-height: .9; color: var(--a); }
-.how b { font-family: var(--f-head); font-weight: 400; font-size: 1.25rem; }
-.how p { color: var(--soft); font-size: .92rem; }
-
-.seg { display: flex; gap: 2px; padding: 4px; border-radius: 14px; background: var(--sf); border: 1px solid var(--line); max-width: 520px; }
-.seg button { flex: 1; min-height: 40px; border-radius: 10px; font-weight: 800; font-size: .85rem; color: var(--soft); }
-.seg button.on { background: var(--a); color: #0a0a0a; }
-.pane { padding-top: 14px; min-height: 180px; }
-.tick { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-@media (min-width: 700px) { .tick { grid-template-columns: 1fr 1fr; } }
-.tick li { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; border-radius: 12px; background: var(--sf); border: 1px solid var(--line); font-weight: 700; font-size: .92rem; }
-.tick.yes li::before { content: '✓'; color: var(--a); font-weight: 900; }
-.tick.no li::before { content: '✕'; color: #ff5a5a; font-weight: 900; }
-.who { display: grid; gap: 14px; }
-@media (min-width: 800px) { .who { grid-template-columns: 1fr 1fr; } .who .tick { grid-template-columns: 1fr; } }
-.who > div > b { display: block; margin-bottom: 8px; font-family: var(--f-head); font-weight: 400; font-size: 1.2rem; }
-
-/* plan */
-.plan-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.prog { font-size: .82rem; font-weight: 800; color: var(--soft); }
-.prog .num { color: var(--a); font-size: 1.2rem; }
-.weeks { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding: 2px var(--gutter); }
-.weeks::-webkit-scrollbar { display: none; }
-.weeks button { flex: none; min-height: 38px; padding: 0 14px; border-radius: 10px; border: 1.5px solid var(--line); font-weight: 800; font-size: .84rem; color: var(--soft); background: var(--sf); }
-.weeks button.on { border-color: var(--a); color: var(--ink); box-shadow: inset 0 -3px 0 var(--a); }
-.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; max-width: 560px; }
-.dd { aspect-ratio: 1; border-radius: 12px; background: var(--sf); border: 1.5px solid var(--line); color: var(--soft); font-size: 1.2rem; display: grid; place-items: center; transition: transform .1s; }
-.dd:active { transform: scale(.92); }
-.dd.done { background: color-mix(in srgb, var(--a) 28%, var(--sf)); color: var(--ink); }
-.dd.sel { border-color: var(--a); background: var(--a); color: #0a0a0a; box-shadow: 0 8px 18px -10px var(--a); }
-.dd.t-high { border-top: 4px solid var(--b); } .dd.t-low { border-top: 4px solid var(--line); } .dd.t-mid { border-top: 4px solid var(--a); }
-.daycard { margin-top: 14px; max-width: 760px; padding: 16px; border-radius: 22px; background: var(--sf); border: 1px solid var(--line); box-shadow: 0 20px 40px -30px var(--a); }
-.dc-h { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; margin-bottom: 6px; border-bottom: 1px dashed var(--line); }
-.dc-h > div { display: grid; }
-.dc-h b { font-family: var(--f-head); font-weight: 400; font-size: 1.5rem; }
-.ty { font-weight: 800; font-size: .78rem; color: var(--b); }
-.kc { font-weight: 800; font-size: .85rem; color: var(--soft); }
-.kc .num { font-size: 1.5rem; color: var(--a); }
-.meals { list-style: none; margin: 0; padding: 0; display: grid; }
-.meals li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.meals li:last-child { border-bottom: 0; }
-.meals .ic { width: 42px; height: 42px; flex: none; border-radius: 13px; display: grid; place-items: center; font-size: 1.25rem; background: color-mix(in srgb, var(--a) 14%, transparent); }
-.meals .x { flex: 1; display: grid; }
-.meals .x small { font-size: .72rem; font-weight: 800; color: var(--soft); }
-.meals .x b { font-size: .98rem; line-height: 1.5; }
-.meals .k { font-size: 1.15rem; color: var(--a); }
-.scale { margin-top: 8px; font-size: .82rem; color: var(--soft); }
-.scale b { color: var(--ink); }
-.scale a { color: var(--a); font-weight: 800; }
-.dc-btns { display: flex; gap: 8px; margin-top: 12px; }
-.done-btn, .next { flex: 1; min-height: 46px; border-radius: 13px; font-weight: 900; font-size: .9rem; border: 1.5px solid var(--line); }
-.done-btn.on { background: var(--a); color: #0a0a0a; border-color: var(--a); }
-.next { color: var(--a); }
-
-/* shopping + tips */
-.two { display: grid; gap: 14px; }
-@media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
-.box { padding: 18px; border-radius: 22px; background: var(--sf); border: 1px solid var(--line); display: grid; gap: 10px; align-content: start; }
-.box h3 { font-size: 1.35rem; }
-.shop { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.shop button { width: 100%; display: flex; align-items: center; gap: 8px; text-align: start; padding: 8px 10px; border-radius: 10px; font-weight: 700; font-size: .86rem; border: 1px solid var(--line); }
-.shop i { width: 18px; height: 18px; flex: none; border-radius: 6px; border: 2px solid var(--a); }
-.shop .got { opacity: .55; text-decoration: line-through; }
-.shop .got i { background: var(--a); }
-.tips { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.tips li { display: flex; gap: 8px; font-weight: 600; font-size: .92rem; }
-.tips li::before { content: '▸'; color: var(--a); }
-.src { font-size: .8rem; font-weight: 800; color: var(--a); }
-.warn { padding: 12px 14px; border-radius: 14px; background: rgba(255,90,90,.1); border: 1px solid rgba(255,90,90,.35); display: grid; gap: 4px; font-size: .88rem; }
-
-/* others */
-.others .h { margin-bottom: 12px; }
-.rail { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; padding-inline: var(--gutter); }
-.rail::-webkit-scrollbar { display: none; }
-.oc { flex: none; scroll-snap-align: start; width: 150px; padding: 14px; border-radius: 18px; background: var(--obg); color: var(--oink); border: 1px solid color-mix(in srgb, var(--oa) 40%, transparent); display: grid; gap: 2px; }
-.oc .oe { font-size: 1.8rem; }
-.oc b { font-family: var(--f-head); font-weight: 400; font-size: 1.2rem; }
-.oc small { color: var(--oa); font-size: .8rem; letter-spacing: .12em; justify-self: start; }
-
-.fade-enter-active, .fade-leave-active { transition: opacity .15s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>

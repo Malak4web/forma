@@ -1,5 +1,5 @@
 // أنظمة الأكل — editorial content. Calories are rough (~1,800 kcal/day baseline) and every page says so.
-// Each diet owns a visual identity (theme + motif + signature visual) used by pages/Diet.vue.
+// Pages share one brand look (styles/systems.css); theme/emoji fields here are legacy and unused by the UI.
 // 30-day plans are built from per-slot meal pools with co-prime steps, so days rarely repeat.
 
 const m = (n, k, tag) => ({ n, k, tag })
